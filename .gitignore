@@ -1,0 +1,8 @@
+*.dot
+*junk
+junk*
+.mypy_cache
+*.png
+__pycache__
+*.states
+*.yaml
