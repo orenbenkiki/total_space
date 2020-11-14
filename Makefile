@@ -28,7 +28,7 @@ pylint:
 	grep 'name:' $? | sed 's/^\s*name: "//;s/"$$//' > $@
 
 %_model.complete: %_model.states
-	if grep -H 'MISSING LOGIC' $<; then false; else true; fi
+	if grep -H ' ! ' $<; then false; else true; fi
 
 %.png: %.dot
 	dot -Tpng -o $@ $?

@@ -147,19 +147,22 @@ ConfigurationBase = NamedTuple('ConfigurationBase', [
     ('name', 'str'),
     ('agents', 'Tuple[Agent, ...]'),
     ('messages_in_flight', 'Tuple[Message, ...]'),
+    ('missing_message', 'Optional[Message]'),
 ])
 
 class Configuration(ConfigurationBase):
     @staticmethod
     def new(agents: List[Agent]) -> 'Configuration':
         assert len(agents) > 0
-        return Configuration(name='', agents=tuple(sorted(agents)), messages_in_flight=()).rename()
+        return Configuration(name='', agents=tuple(sorted(agents)), messages_in_flight=(), missing_message=None).rename()
 
     def rename(self) -> 'Configuration':
         name = ' , '.join([agent.text() for agent in self.agents])
         if len(self.messages_in_flight) > 0:
             name += ' ; '
             name += ' , '.join([message.text() for message in self.messages_in_flight])
+        if self.missing_message is not None:
+            name += ' ! ' + self.missing_message.text()
         return self._replace(name=name)
 
 
@@ -275,16 +278,15 @@ def _record_missing_logic(
     node: Node,
     message: Message,
 ) -> None:
-    new_name = node.configuration.name + (' ; MISSING LOGIC FOR %s' % message.text())
-    new_configuration = node.configuration._replace(name=new_name)
+    new_configuration = node.configuration._replace(missing_message=message).rename()
 
     transition = Transition(from_configuration_name=node.configuration.name,
                             received_message=message,
                             to_configuration_name=new_configuration.name)
 
-    nodes[new_name] = Node(configuration=new_configuration,
-                           incoming_transitions=(transition,),
-                           outgoing_transitions=())
+    nodes[new_configuration.name] = Node(configuration=new_configuration,
+                                         incoming_transitions=(transition,),
+                                         outgoing_transitions=())
 
 
 def _replace(data: Tuple, index: int, datum: Any) -> Tuple:

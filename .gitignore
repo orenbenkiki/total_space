@@ -6,3 +6,4 @@ junk*
 __pycache__
 *.states
 *.yaml
+.*.sw*

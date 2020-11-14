@@ -63,7 +63,7 @@ def print_dot(data: Any, cluster_by_agents: List[str]):
 
 def print_node(node_index: int, node_name: str) -> None:
     print('%s [ label="%s" ];' % (node_index, node_name.replace(' , ', '\n').replace(' ; ', '\n')))
-    if 'MISSING LOGIC' in node_name:
+    if ' ! ' in node_name:
         node_name = 'MISSING LOGIC'
         shape = 'doubleoctagon'
     else:
