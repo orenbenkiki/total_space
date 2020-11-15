@@ -145,8 +145,10 @@ def flags(parser: ArgumentParser) -> None:
     '''
     Add command line flags for testing partial and invalid models.
     '''
-    parser.add_argument('-p', '--partial', action='store_true', help='Generate a partial model.')
-    parser.add_argument('-i', '--invalid', action='store_true', help='Generate an invalid model.')
+    group = parser.add_argument_group('model')
+    group.add_argument('-p', '--partial', action='store_true', help='Generate a partial model.')
+    group.add_argument('-i', '--invalid', action='store_true', help='Generate an invalid model.')
+    group.add_argument('-c', '--clients', metavar='NUMBER', type=int, default=2, help='The number of clients.')
 
 
 def model(args: Namespace) -> 'Collection[Agent]':
@@ -162,11 +164,7 @@ def model(args: Namespace) -> 'Collection[Agent]':
         global SERVER_STATE
         SERVER_STATE = InvalidServerState
 
-    return [
-        ClientAgent.new('client-1'),
-        ClientAgent.new('client-2'),
-        server.new('server'),
-    ]
+    return [server.new('server')] + [ClientAgent.new('client-%s' % client_index) for client_index in range(args.clients)]
 
 
 # Investigate a system with a single server and two clients.
