@@ -33,7 +33,7 @@ __all__ = [
     'Agent',
     'Configuration',
     'Transition',
-    'Model',
+    'System',
     'main',
 ]
 
