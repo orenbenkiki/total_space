@@ -2,25 +2,25 @@
 Investigate the total state space of communicating state machines.
 '''
 
-# pylint: disable=missing-docstring
-# pylint: disable=inherit-non-class
-# pylint: disable=line-too-long
-# pylint: disable=too-few-public-methods
 # pylint: disable=C0330
-# pylint: disable=multiple-statements
+# pylint: disable=inherit-non-class
 # pylint: disable=len-as-condition
-# pylint: disable=pointless-statement
+# pylint: disable=line-too-long
+# pylint: disable=multiple-statements
 # pylint: disable=no-member
+# pylint: disable=no-name-in-module
+# pylint: disable=pointless-statement
+# pylint: disable=too-few-public-methods
+# pylint: disable=unused-wildcard-import
+# pylint: disable=wildcard-import
 
 
-from abc import abstractmethod
-from warnings import warn
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import NamedTuple
-from typing import Tuple
+from argparse import ArgumentParser
+from argparse import Namespace
+import sys
+from contextlib import contextmanager
+from functools import total_ordering
+from typing import *
 
 
 __all__ = [
@@ -30,293 +30,651 @@ __all__ = [
     'Agent',
     'Configuration',
     'Transition',
-    'Node',
-    'configuration_space',
-    'print_yaml',
+    'Model',
+    'main',
 ]
 
 
-# The code here uses tuples instead of lists.
-#
-# The code here is in a "functional" style and makes heavy use of immutable data.
-#
-# It therefore uses named tuples instead of simple classes and tuples instead of lists.
-#
-# Using python 3.6 would have allowed using a much cleaner syntax for the named tuples.
+@total_ordering
+class Immutable:
+    '''
+    Prevent any properties from being modified.
 
+    The code here is in a "functional" style and makes heavy use of immutable data.
+    '''
 
-# A state of an agent.
-#
-# In general the state of an agent could be "anything" (including "nothing" - None).
-#
-# It "should" be immutable; use named tuples for structures and simple tuples for arrays/lists.
-#
-# In general one can bury all the information in the data field and use a single state name.
-#
-# However for clarity, the overall space of all possible states is split into named sub-spaces.
+    #: Allow modification of properties when initializing the object.
+    is_initializing = False
 
-State = NamedTuple('State', [
-    ('name', 'str'),
-    ('data', 'Any'),
-])
-
-# A message sent between two agents.
-#
-# This has the same name-vs-data considerations as the agent state above.
-#
-# We shoehorn the time-passes event to look like a message whose source is the agent state name,
-# whose name is `time`, and whose data is empty (`None`).
-
-MessageBase = NamedTuple('MessageBase', [
-    ('source_agent_name', 'str'),
-    ('name', 'str'),
-    ('target_agent_name', 'str'),
-    ('data', 'Any'),
-])
-
-
-class Message(MessageBase):
-    def text(self) -> str:
-        if self.data not in [None, (), [], '']:
-            data = ' / %s' % (self.data)
+    def __setattr__(self, name: str, value: Any) -> None:
+        if Immutable.is_initializing:
+            object.__setattr__(self, name, value)
         else:
-            data = ''
-        return '%s -> %s%s -> %s' % (self.source_agent_name, self.name, data, self.target_agent_name)
+            raise RuntimeError('trying to modify the property: %s of an immutable: %s'
+                               % (name, self.__class__.__qualname__))
+
+    def __eq__(self, other) -> bool:
+        return self.__dict__ == other.__dict__
+
+    def __lt__(self, other) -> bool:
+        return str(self) < str(other)
+
+
+@contextmanager
+def initializing() -> Iterator[None]:
+    '''
+    Allow mutating :py:const:`Immutable` data during initialization.
+    '''
+    try:
+        was_initalizing = Immutable.is_initializing
+        Immutable.is_initializing = True
+        yield
+    finally:
+        Immutable.is_initializing = was_initalizing
+
+
+class State(Immutable):
+    '''
+    A state of an :py:const:`Agent`.
+
+    In general the state of an agent could be "anything" (including "nothing" - None).
+    It "should" be immutable; use named tuples for structures and simple tuples for arrays/lists.
+
+    In general one can bury all the information in the data field and use a single state name.
+    However for clarity, the overall space of all possible states is split into named sub-spaces.
+    '''
+
+    __slots__ = ['name', 'data']
+
+    def __init__(self, *, name: str, data: Any = None) -> None:
+        with initializing():
+            #: The state's name, used for visualization and method names.
+            self.name = name
+
+            #: The state's actual data.
+            self.data = data
+
+    def validate(self) -> 'Collection[str]':  # pylint: disable=no-self-use
+        '''
+        Return a hopefully empty collection of reasons the state is invalid.
+        '''
+        return ()
+
+    def __str__(self) -> str:
+        if self.data in [None, (), [], '', set(), {}]:
+            return self.name
+        return '%s / %s' % (self.name, self.data)
+
+
+class Message(State):
+    '''
+    A message sent from one :py:const:`Agent` to another (or a time message).
+
+    This has the same name-vs-data considerations as the agent :py:const:`State` above.
+    '''
+
+    __slots__ = ['source_agent_name', 'target_agent_name']
+
+    def __init__(self, *, source_agent_name: str, name: str, target_agent_name: str, data: Any) -> None:
+        State.__init__(self, name=name, data=data)
+        with initializing():
+            #: The name of the agent that generated the message, or ``time``.
+            self.source_agent_name = source_agent_name
+
+            #: The name of the agent that will receive the message.
+            self.target_agent_name = target_agent_name
 
     @staticmethod
     def time(agent: 'Agent') -> 'Message':
+        '''
+        We shoehorn the time-passes event to look like a message whose source is the agent state name,
+        whose name is ``time``, and whose data is empty (``None``).
+        '''
         return Message(source_agent_name=agent.state.name, name='time', target_agent_name=agent.name, data=None)
 
-
-# An action taken by an agent as a response to an event.
-#
-# The agent can change its internal state and/or send messages.
-#
-# We assume the communication fabric may reorder messages.
-#
-# That is, there's no guarantee at what order the sent messages will be received by their targets.
-
-Action = NamedTuple('Action', [
-    ('name', 'str'),
-    ('next_state', 'State'),
-    ('send_messages', 'Tuple[Message, ...]'),
-])
+    def __str__(self) -> str:
+        return '%s -> %s -> %s' % (self.source_agent_name, State.__str__(self), self.target_agent_name)
 
 
-# An agent in the system.
-#
-# Each agent is a state machine.
+class Action(Immutable):
+    '''
+    A possible action taken by an py:const:`Agent` as a response to receiving a :py:const:`Message`.
+    '''
 
-AgentBase = NamedTuple('AgentBase', [
-    ('name', 'str'),
-    ('state', 'State'),
-])
+    __slots__ = ['name', 'next_state', 'send_messages']
 
-class _MissingLogicError(NotImplementedError):
-    pass
+    def __init__(self, *, name: str, next_state: Optional[State] = None, send_messages: 'Collection[Message]' = ()) -> None:
+        with initializing():
+            #: The name of the action for visualization.
+            self.name = name
 
-class Agent(AgentBase):
-    def text(self) -> str:
+            #: The next :py:const:`State` of the agent. If ``None`` the agent remains in the same state.
+            self.next_state = next_state
+
+            #: Any :py:const:`Message` sent by the agent.
+            #: We assume the communication fabric may reorder messages.
+            #: That is, there's no guarantee at what order the sent messages will be received by their targets.
+            self.send_messages = tuple(send_messages)
+
+
+class Agent(Immutable):
+    '''
+    An agent in the :py:const:`Configuration`.
+
+    Each agent is a non-deterministic state machine.
+
+    Sub-classes should implement methods with the name ``_<message_name>_when_<state_name>``,
+    which are invoked when the has a :py:const:`State` with ``state_name``,
+    and receives a py:const:`Message` with the name ``message_name``.
+
+    Each method takes the data of the message,
+    returns a tuple of alternative :py:const:`Action` possibilities.
+    '''
+
+    __slots__ = ['name', 'state']
+
+    def __init__(self, *, name: str, state: State) -> None:
+        with initializing():
+            #: The name of the agent for visualization.
+            self.name = name
+
+            #: The state of the agent.
+            self.state = state
+
+    def with_state(self, state: State) -> 'Agent':
+        '''
+        Return a new agent with a modified state.
+        '''
+        return self.__class__(name=self.name, state=state)
+
+    def __str__(self) -> str:
         name = '%s @ %s' % (self.name, self.state.name)
         if self.state.data not in [None, (), [], '']:
             name += ' / %s' % (self.state.data,)
         return name
 
-    @abstractmethod
-    def response_actions(self, message: Message) -> Tuple[Action, ...]:
-        '''
-        Given the current state of the agent, and a message received by it, return the potential alternative actions that might be taken.
 
-        That is, this is a non-deterministic state machine.
-
-        This is especially important when dealing with time events.
-        '''
-
-    def unknown_message(self, message: Message) -> _MissingLogicError:
-        '''
-        Used to report missing logic (partial model) when receiving a message.
-        '''
-        return _MissingLogicError('unexpected message: %s in state: %s for agent: %s'
-                                  % (message.name, self.state.name, self.name))
-
-# A configuration (total state) of the system.
-#
-# This includes all the agents and all the in-flight messages.
-
-ConfigurationBase = NamedTuple('ConfigurationBase', [
-    ('name', 'str'),
-    ('agents', 'Tuple[Agent, ...]'),
-    ('messages_in_flight', 'Tuple[Message, ...]'),
-    ('missing_message', 'Optional[Message]'),
-])
-
-class Configuration(ConfigurationBase):
-    @staticmethod
-    def new(agents: List[Agent]) -> 'Configuration':
-        assert len(agents) > 0
-        return Configuration(name='', agents=tuple(sorted(agents)), messages_in_flight=(), missing_message=None).rename()
-
-    def rename(self) -> 'Configuration':
-        name = ' , '.join([agent.text() for agent in self.agents])
-        if len(self.messages_in_flight) > 0:
-            name += ' ; '
-            name += ' , '.join([message.text() for message in self.messages_in_flight])
-        if self.missing_message is not None:
-            name += ' ! ' + self.missing_message.text()
-        return self._replace(name=name)
-
-
-# A transition between configurations.
-
-Transition = NamedTuple('Transition', [
-    ('from_configuration_name', 'str'),
-    ('received_message', 'Message'),
-    ('to_configuration_name', 'str'),
-])
-
-
-# A node in the total state space graph.
-
-Node = NamedTuple('Node', [
-    ('configuration', 'Configuration'),
-    ('outgoing_transitions', 'Tuple[Transition, ...]'),
-    ('incoming_transitions', 'Tuple[Transition, ...]'),
-])
-
-
-def configuration_space(agents: List[Agent]) -> Dict[str, Node]:
+class Invalid(Immutable):
     '''
-    Return the total state space for a system containing the specified agents.
-
-    The key for each node is the configuration name.
+    Indicate something is invalid.
     '''
-    initial_configuration = Configuration.new(agents)
-    agent_index_by_name = {agent.name: agent_index for agent_index, agent in enumerate(initial_configuration.agents)}
-    initial_node = Node(initial_configuration, (), ())
-    nodes = {initial_node.configuration.name: initial_node}
-    pending = [initial_configuration.name]
-    while len(pending) > 0:
-        node = nodes[pending.pop()]
-        _explore_time(pending, nodes, node)
-        _explore_messages(pending, nodes, node, agent_index_by_name)
-    return nodes
+
+    __slots__ = ['kind', 'name', 'reason']
+
+    def __init__(self, *, kind: str, name: Optional[str] = None, reason: str) -> None:
+        assert kind in ['agent', 'message', 'configuration']
+        assert (name is None) == (kind == 'configuration')
+
+        with initializing():
+            #: The kind of invalid condition (``agent``, ``message``, or a whole system ``configuration``).
+            self.kind = kind
+
+            #: The name of whatever is invalid.
+            self.name = name
+
+            #: The reason for the invalid condition (short one line text).
+            self.reason = reason
+
+    def __str__(self) -> str:
+        if self.name is None:
+            return '%s is invalid because: %s' % (self.kind, self.reason)
+        return '%s: %s is invalid because: %s' % (self.kind, self.name, self.reason)
 
 
-def _explore_time(
-    pending: List[str],
-    nodes: Dict[str, Node],
-    node: Node,
-) -> None:
-    for agent_index, agent in enumerate(node.configuration.agents):
-        message = Message.time(agent)
-        try:
-            for action in agent.response_actions(message):
-                _apply_action(pending, nodes, node, agent_index, agent, action, Message.time(agent))
-        except _MissingLogicError as missing_logic:
-            _record_missing_logic(nodes, node, message)
-            warn(str(missing_logic))
+class Configuration(Immutable):
+    '''
+    The total configuration of the whole system.
+    '''
 
-def _explore_messages(
-    pending: List[str],
-    nodes: Dict[str, Node],
-    node: Node,
-    agent_index_by_name: Dict[str, int],
-) -> None:
-    for message_index, message in enumerate(node.configuration.messages_in_flight):
-        agent_index = agent_index_by_name[message.target_agent_name]
-        agent = node.configuration.agents[agent_index]
-        try:
-            for action in agent.response_actions(message):
-                _apply_action(pending, nodes, node, agent_index, agent, action, message, message_index)
-        except _MissingLogicError as missing_logic:
-            _record_missing_logic(nodes, node, message)
-            warn(str(missing_logic))
+    __slots__ = ['name', 'agents', 'messages_in_flight', 'invalids']
+
+    def __init__(
+        self,
+        *,
+        agents: 'Collection[Agent]',
+        messages_in_flight: 'Collection[Message]' = (),
+        invalids: 'Collection[Invalid]' = ()
+    ) -> None:
+        with initializing():
+            #: All the agents with their state.
+            self.agents = tuple(sorted(agents))
+
+            #: The messages in-flight between agents.
+            self.messages_in_flight = tuple(sorted(messages_in_flight))
+
+            #: Everything invalid in this configuration.
+            self.invalids = tuple(sorted(invalids))
+
+            name = ' , '.join([str(agent) for agent in self.agents])
+            if len(self.messages_in_flight) > 0:
+                name += ' ; '
+                name += ' , '.join([str(message) for message in self.messages_in_flight])
+            if len(self.invalids) > 0:
+                name += ' ! '
+                name += ' , '.join([str(invalid) for invalid in self.invalids])
+
+            #: A name fully describing the total configuration.
+            self.name = name
+
+    def __str__(self) -> str:
+        return self.name
+
+    @property
+    def valid(self) -> bool:
+        '''
+        Report whether the configuration is valid.
+        '''
+        return len(self.invalids) == 0
 
 
-def _apply_action(  # pylint: disable=too-many-arguments,too-many-locals
-    pending: List[str],
-    nodes: Dict[str, Node],
-    node: Node,
-    agent_index: int,
-    agent: Agent,
-    action: Action,
-    message: Message,
-    message_index: Optional[int] = None,
-) -> None:
-    new_agent = agent._replace(state=action.next_state)
-    new_agents = _replace(node.configuration.agents, agent_index, new_agent)
+class Transition(Immutable):
+    '''
+    A transition between one :py:const:`Configuration` to another.
+    '''
 
-    new_messages_in_flight = node.configuration.messages_in_flight
-    if message_index is not None:
-        new_messages_in_flight = _remove(new_messages_in_flight, message_index)
-    new_messages_in_flight = tuple(sorted(new_messages_in_flight + action.send_messages))
+    __slots__ = ['from_configuration_name', 'delivered_message', 'to_configuration_name']
 
-    new_configuration = node.configuration._replace(agents=new_agents, messages_in_flight=new_messages_in_flight).rename()
+    def __init__(self, *, from_configuration_name: str, delivered_message: Message, to_configuration_name: str) -> None:
+        with initializing():
+            #: The name of the configuration before the transition.
+            self.from_configuration_name = from_configuration_name
 
-    transition = Transition(from_configuration_name=node.configuration.name,
-                            received_message=message,
-                            to_configuration_name=new_configuration.name)
+            #: The message that was delivered to an agent to trigger the transition.
+            self.delivered_message = delivered_message
 
-    new_outgoing_transitions = tuple(sorted(node.outgoing_transitions)) + (transition,)
-    node = node._replace(outgoing_transitions=new_outgoing_transitions)
-    nodes[node.configuration.name] = node
+            #: The name of the configuration after the transition.
+            self.to_configuration_name = to_configuration_name
 
-    old_node = nodes.get(new_configuration.name)
-    if old_node is None:
-        new_node = Node(new_configuration, incoming_transitions=(transition,), outgoing_transitions=())
-        pending.append(new_node.configuration.name)
+    def __str__(self) -> str:
+        return '%s -> %s -> %s' % (self.from_configuration_name, self.delivered_message, self.to_configuration_name)
 
+
+#: The type of a function that validates a :py:const:`Configuration`,
+#: returning a hopefully empty collection of :py:const:`Invalid` indications.
+Validation = Callable[[Configuration], 'Collection[Invalid]']
+
+class System(Immutable):
+    '''
+    The total state space of the whole system.
+    '''
+
+    __slots__ = ['configurations', 'transitions']
+
+    def __init__(
+        self,
+        *,
+        agents: 'Collection[Agent]',
+        validate: Optional[Validation] = None
+    ) -> None:
+        model = Model(agents, validate)
+
+        with initializing():
+            #: All the possible configurations the system could be at.
+            self.configurations = tuple(sorted(model.configurations.values()))
+
+            #: All the transitions between the configurations.
+            self.transitions = tuple(sorted(model.transitions))
+
+    def print_states(self, file: 'TextIO') -> None:
+        '''
+        Print a list of all the system configurations to a file.
+        '''
+        for configuration in self.configurations:
+            file.write('%s\n' % configuration.name)
+
+    def print_transitions(self, file: 'TextIO') -> None:
+        '''
+        Print a list of all the transitions between system configurations to a tab-separated file.
+        '''
+        file.write('from_configuration_name\t')
+        file.write('delivered_message_source_agent_name\t')
+        file.write('delivered_message_name\t')
+        file.write('delivered_message_data\t')
+        file.write('delivered_message_target_agent_name\t')
+        file.write('to_configuration_name\n')
+
+        for transition in self.transitions:
+            file.write('%s\t' % transition.from_configuration_name)
+            file.write('%s\t' % transition.delivered_message.source_agent_name)
+            file.write('%s\t' % transition.delivered_message.name)
+            file.write('%s\t' % transition.delivered_message.data)
+            file.write('%s\t' % transition.delivered_message.target_agent_name)
+            file.write('%s\n' % transition.to_configuration_name)
+
+    def print_dot(self, file: 'TextIO', cluster_by_agents: 'Collection[str]' = (), label: str = 'Total Space') -> None:
+        '''
+        Print a ``dot`` file visualizing all the possible system configuration states and the transitions between them.
+        '''
+        file.write('digraph G {\n')
+        file.write('fontname = "Sans-Serif";\n')
+        file.write('fontsize = 32;\n')
+        file.write('node [fontname = "Sans-Serif"];\n')
+        file.write('edge [fontname = "Sans-Serif"];\n')
+        file.write('label = "%s";\n' % label)
+
+        self.print_nodes(file, cluster_by_agents)
+        self.print_edges(file)
+
+        file.write('}\n')
+
+    def print_nodes(self, file: 'TextIO', cluster_by_agents: 'Collection[str]') -> None:
+        '''
+        Print all the nodes of the ``dot`` file.
+        '''
+        if len(cluster_by_agents) == 0:
+            for configuration in self.configurations:
+                print_dot_node(file, configuration)
+            return
+
+        agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(self.configurations[0].agents)}
+        cluster_by_indices = [agent_indices[agent_name] for agent_name in cluster_by_agents]
+        paths = [['%s @ %s' % (configuration.agents[agent_index].name, configuration.agents[agent_index].state.name)
+                  for agent_index in cluster_by_indices]
+                 for configuration in self.configurations]
+
+        current_path = []  # type: List[str]
+        for path, configuration in sorted(zip(paths, self.configurations)):
+            remaining_path = current_path + []
+            while len(remaining_path) > 0 and len(current_path) > 0 and remaining_path[0] == path[0]:
+                remaining_path = remaining_path[1:]
+                path = path[1:]
+
+            while len(remaining_path) > 0:
+                remaining_path.pop()
+                current_path.pop()
+                file.write('}\n')
+
+            for cluster in path:
+                current_path.append(cluster)
+                file.write('subgraph "cluster_%s" {\n' % ' , '.join(current_path))
+                file.write('fontsize = 24;\n')
+                file.write('label = "%s";\n' % cluster)
+
+            print_dot_node(file, configuration)
+
+        while len(current_path) > 0:
+            current_path.pop()
+            file.write('}\n')
+
+    def print_edges(self, file: 'TextIO') -> None:
+        '''
+        Print all the edges of the ``dot`` file.
+        '''
+        for transition in self.transitions:
+            print_dot_edge(file, transition)
+
+
+def print_dot_node(file: 'TextIO', configuration: Configuration) -> None:
+    '''
+    Print a node for a system configuration state.
+    '''
+    if configuration.valid:
+        color = 'aquamarine'
+        label = configuration.name.replace(' , ', '\n').replace(' ; ', '\n')
     else:
-        new_incoming_transitions = tuple(sorted(old_node.incoming_transitions)) + (transition,)
-        new_node = old_node._replace(incoming_transitions=new_incoming_transitions)
-
-    nodes[new_node.configuration.name] = new_node
-
-
-def _record_missing_logic(
-    nodes: Dict[str, Node],
-    node: Node,
-    message: Message,
-) -> None:
-    new_configuration = node.configuration._replace(missing_message=message).rename()
-
-    transition = Transition(from_configuration_name=node.configuration.name,
-                            received_message=message,
-                            to_configuration_name=new_configuration.name)
-
-    nodes[new_configuration.name] = Node(configuration=new_configuration,
-                                         incoming_transitions=(transition,),
-                                         outgoing_transitions=())
+        color = 'lightcoral'
+        label = '\n'.join([str(invalid) for invalid in configuration.invalids]).replace('because: ', 'because:\n')
+    file.write('"%s" [ label="%s", shape=box, style=filled, fillcolor=%s ];\n' % (configuration.name, label, color))
 
 
-def _replace(data: Tuple, index: int, datum: Any) -> Tuple:
-    return data[0:index] + (datum,) + data[index + 1:]
+def print_dot_edge(file: 'TextIO', transition: Transition) -> None:
+    '''
+    Print an edge to represent a transition between system configuration states.
+    '''
+    file.write('"%s" -> "%s" [ label="%s\n-> %s ->\n%s" ];\n'
+               % (transition.from_configuration_name, transition.to_configuration_name,
+                  transition.delivered_message.source_agent_name,
+                  State.__str__(transition.delivered_message),
+                  transition.delivered_message.target_agent_name))
 
 
-def _remove(data: Tuple, index: int) -> Tuple:
+class Model:
+    '''
+    Model the whole system.
+    '''
+
+    def __init__(
+        self,
+        agents: 'Collection[Agent]',
+        validate: Optional[Validation] = None
+    ) -> None:
+        #: How to validate configurations.
+        self.validate = validate
+
+        initial_configuration = self.validated_configuration(Configuration(agents=agents))
+
+        #: Quick mapping from agent name to its index in the agents tuple.
+        self.agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(initial_configuration.agents)}
+
+        #: All the transitions between configurations.
+        self.transitions = []  # type: List[Transition]
+
+        #: All the known configurations, keyed by their name.
+        self.configurations = {initial_configuration.name: initial_configuration}
+
+        if not initial_configuration.valid:
+            return
+
+        #: The names of all the configurations we didn't fully model yet.
+        self.pending_configuration_names = [initial_configuration.name]
+
+        while len(self.pending_configuration_names) > 0:
+            self.explore_configuration(self.pending_configuration_names.pop())
+
+    def explore_configuration(self, configuration_name: str) -> None:
+        '''
+        Explore all the transitions from a configuration.
+        '''
+        configuration = self.configurations[configuration_name]
+        assert configuration.valid
+
+        for agent in configuration.agents:
+            self.deliver_message(configuration, Message.time(agent))
+
+        for message_index, message in enumerate(configuration.messages_in_flight):
+            self.deliver_message(configuration, message, message_index)
+
+    def deliver_message(
+        self,
+        configuration: Configuration,
+        message: Message,
+        message_index: Optional[int] = None
+    ) -> None:
+        '''
+        Deliver the specified message to its target, creating new transitions and, if needed, new pending configurations.
+        '''
+        agent_index = self.agent_indices[message.target_agent_name]
+        agent = configuration.agents[agent_index]
+        handler = getattr(agent, '_%s_when_%s' % (message.name, agent.state.name), None)
+
+        if handler is None:
+            self.missing_handler(configuration, agent, message, message_index)
+        else:
+            for action in handler(message.data):
+                self.perform_action(configuration, agent, agent_index, action, message, message_index)
+
+    def perform_action(  # pylint: disable=too-many-arguments
+        self,
+        configuration: Configuration,
+        agent: Agent,
+        agent_index: int,
+        action: Action,
+        message: Message,
+        message_index: Optional[int]
+    ) -> None:
+        '''
+        Perform one of the actions the agent might take as a response to the message.
+        '''
+        if action.next_state is None:
+            new_agent = None
+            invalids = []  # type: List[Invalid]
+        else:
+            new_agent = agent.with_state(action.next_state)
+            invalids = [Invalid(kind='agent', name=agent.name, reason=reason)
+                         for reason in action.next_state.validate()]
+
+        self.new_transition(configuration, new_agent, agent_index, message, message_index, invalids, action.send_messages)
+
+    def missing_handler(
+        self,
+        configuration: Configuration,
+        agent: Agent,
+        message: Message,
+        message_index: Optional[int]
+    ) -> None:
+        '''
+        Report a missing message handler for an agent at some state.
+        '''
+        invalid = Invalid(kind='agent', name=agent.name,
+                           reason='missing handler for message: %s when in state: %s' % (message.name, agent.state.name))
+
+        self.new_transition(configuration, None, None, message, message_index, [invalid])
+
+    def new_transition(  # pylint: disable=too-many-arguments
+        self,
+        from_configuration: Configuration,
+        agent: Optional[Agent],
+        agent_index: Optional[int],
+        message: Message,
+        message_index: Optional[int],
+        invalids: 'Collection[Invalid]',
+        send_messages: 'Collection[Message]' = ()
+    ) -> None:
+        '''
+        Create a new transition, and, if needed, a new pending configuration.
+        '''
+        if agent is None:
+            new_agents = from_configuration.agents
+        else:
+            assert agent_index is not None
+            new_agents = tuple_replace(from_configuration.agents, agent_index, agent)
+
+        if message_index is None:
+            new_messages_in_flight = from_configuration.messages_in_flight
+        else:
+            new_messages_in_flight = tuple_remove(from_configuration.messages_in_flight, message_index)
+
+        if len(send_messages) > 0:
+            new_messages_in_flight = tuple(sorted(new_messages_in_flight + tuple(send_messages)))
+
+        to_configuration = self.validated_configuration(Configuration(agents=new_agents,
+                                                                      messages_in_flight=new_messages_in_flight,
+                                                                      invalids=tuple(sorted(invalids))))
+
+        transition = Transition(from_configuration_name=from_configuration.name,
+                                delivered_message=message,
+                                to_configuration_name=to_configuration.name)
+        self.transitions.append(transition)
+
+        if to_configuration.name in self.configurations:
+            return
+
+        self.configurations[to_configuration.name] = to_configuration
+
+        if to_configuration.valid:
+            self.pending_configuration_names.append(to_configuration.name)
+
+    def validated_configuration(self, configuration: Configuration) -> Configuration:
+        '''
+        Attach all relevant :py:const:`Invalid` indicators to a :py:const:`Configuration`.
+        '''
+        if self.validate is None:
+            return configuration
+
+        invalids = self.validate(configuration)
+        if len(invalids) == 0:
+            return configuration
+
+        return Configuration(agents=configuration.agents, messages_in_flight=configuration.messages_in_flight, invalids=invalids)
+
+
+def tuple_replace(data: Tuple, index: int, value: Any) -> Tuple:
+    '''
+    Return a new tuple which replaces a value at an index to a new value.
+
+    This should have been a Python builtin.
+    '''
+    assert 0 <= index < len(data)
+    return data[0:index] + (value,) + data[index + 1:]
+
+
+def tuple_remove(data: Tuple, index: int) -> Tuple:
+    '''
+    Return a new tuple which removes a value at an index.
+
+    This should have been a Python builtin.
+    '''
+    assert 0 <= index < len(data)
     return data[0:index] + data[index + 1:]
 
 
-def print_yaml(nodes: Dict[str, Node]):
-    node_index_by_name = {}
-    node_name_by_index = []
-    for index, name in enumerate(sorted(nodes.keys())):
-        node_index_by_name[name] = index
-        node_name_by_index.append(name)
+def main(
+    *,
+    flags: Optional[Callable[[ArgumentParser], None]] = None,
+    model: Callable[[Namespace], 'Collection[Agent]'],
+    validate: Optional[Validation] = None,
+    description: str = 'Investigate the total state space of communicating finite state machines',
+    epilog: str = ''
+) -> None:
+    '''
+    A universal main function for invoking the functionality provided by this package.
 
-    for node_index, node_name in enumerate(node_name_by_index):
-        node = nodes[node_name]
-        print('%s:' % node_index)
-        print('  name: "%s"' % node.configuration.name)
-        print('  incoming:')
-        for transition in node.incoming_transitions:
-            print('    %s:' % node_index_by_name[transition.from_configuration_name])
-            print('      source: %s' % transition.received_message.source_agent_name)
-            print('      message: %s' % transition.received_message.name)
-            print('      target: %s' % transition.received_message.target_agent_name)
-        print('  outgoing:')
-        for transition in node.outgoing_transitions:
-            print('    %s:' % node_index_by_name[transition.to_configuration_name])
-            print('      source: %s' % transition.received_message.source_agent_name)
-            print('      message: %s' % transition.received_message.name)
-            print('      target: %s' % transition.received_message.target_agent_name)
+    Run with ``-h`` or ``--help`` for a full list of the options.
+    '''
+    parser = ArgumentParser(description=description, epilog=epilog)
+    parser.add_argument('-o', '--output', action='store', metavar='FILE', help='Write output to the specified file.')
+    if flags is not None:
+        flags(parser)
+
+    subparsers = parser.add_subparsers(title='command', metavar='')
+
+    states_parser = subparsers.add_parser('states', help='Print a list of all possible system states.')
+    states_parser.set_defaults(function=states_command)
+
+    transitions_parser = subparsers.add_parser('transitions',
+                                               help='Print a tab-separated file of all transitions between system states.')
+    transitions_parser.set_defaults(function=transitions_command)
+
+    dot_parser = subparsers.add_parser('dot', help='Print a graphviz dot file visualizing the dot between system states.')
+    dot_parser.add_argument('-l', '--label', metavar='STR', default='Total Space', help='Specify a label for the graph.')
+    dot_parser.add_argument('-c', '--cluster', metavar='AGENT', action='append', default=[],
+                            help='Cluster nodes according to the states of the specified agent. Repeat for nesting clusters.')
+    dot_parser.set_defaults(function=dot_command)
+
+    args = parser.parse_args(sys.argv[1:])
+    system = System(agents=model(args), validate=validate)
+    with output(args) as file:
+        args.function(args, file, system)
+
+
+def states_command(args: Namespace, file: 'TextIO', system: System) -> None:
+    '''
+    Implement the ``states`` command.
+    '''
+    system.print_states(file)
+
+
+def transitions_command(args: Namespace, file: 'TextIO', system: System) -> None:
+    '''
+    Implement the ``transitions`` command.
+    '''
+    system.print_transitions(file)
+
+
+def dot_command(args: Namespace, file: 'TextIO', system: System) -> None:
+    '''
+    Implement the ``dot`` command.
+    '''
+    system.print_dot(file, args.cluster, args.label)
+
+
+@contextmanager
+def output(args: Namespace) -> 'Iterator[TextIO]':
+    '''
+    Direct the output according to the ``--output`` command line flag.
+    '''
+    if args.output is None:
+        yield sys.stdout
+    else:
+        with open(args.output, 'w') as file:
+            yield file

@@ -1,9 +1,13 @@
+dist
 *.dot
+*.egg-info
 *junk
 junk*
 .mypy_cache
 *.png
+*.pyc
 __pycache__
 *.states
-*.yaml
 .*.sw*
+tests/*.actual
+.tox

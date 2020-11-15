@@ -1,0 +1,162 @@
+digraph G {
+fontname = "Sans-Serif";
+fontsize = 32;
+node [fontname = "Sans-Serif"];
+edge [fontname = "Sans-Serif"];
+label = "Total Space";
+"client-1 @ idle , client-2 @ idle , server @ ready" [ label="client-1 @ idle
+client-2 @ idle
+server @ ready", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ idle , client-2 @ wait , server @ busy / ('client-2',)" [ label="client-1 @ idle
+client-2 @ wait
+server @ busy / ('client-2',)", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ idle , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server" [ label="client-1 @ idle
+client-2 @ wait
+server @ ready
+client-2 -> request / client-2 -> server", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ idle , client-2 @ wait , server @ ready ; server -> response / client-2 -> client-2" [ label="client-1 @ idle
+client-2 @ wait
+server @ ready
+server -> response / client-2 -> client-2", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ idle , server @ busy / ('client-1',)" [ label="client-1 @ wait
+client-2 @ idle
+server @ busy / ('client-1',)", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ idle , server @ ready ; client-1 -> request / client-1 -> server" [ label="client-1 @ wait
+client-2 @ idle
+server @ ready
+client-1 -> request / client-1 -> server", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ idle , server @ ready ; server -> response / client-1 -> client-1" [ label="client-1 @ wait
+client-2 @ idle
+server @ ready
+server -> response / client-1 -> client-1", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-1', 'client-2') ! agent: server is invalid because: hold two requests" [ label="agent: server is invalid because:
+hold two requests", shape=box, style=filled, fillcolor=lightcoral ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; client-2 -> request / client-2 -> server" [ label="client-1 @ wait
+client-2 @ wait
+server @ busy / ('client-1',)
+client-2 -> request / client-2 -> server", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; server -> response / client-2 -> client-2" [ label="client-1 @ wait
+client-2 @ wait
+server @ busy / ('client-1',)
+server -> response / client-2 -> client-2", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-2', 'client-1') ! agent: server is invalid because: hold two requests" [ label="agent: server is invalid because:
+hold two requests", shape=box, style=filled, fillcolor=lightcoral ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; client-1 -> request / client-1 -> server" [ label="client-1 @ wait
+client-2 @ wait
+server @ busy / ('client-2',)
+client-1 -> request / client-1 -> server", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; server -> response / client-1 -> client-1" [ label="client-1 @ wait
+client-2 @ wait
+server @ busy / ('client-2',)
+server -> response / client-1 -> client-1", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , client-2 -> request / client-2 -> server" [ label="client-1 @ wait
+client-2 @ wait
+server @ ready
+client-1 -> request / client-1 -> server
+client-2 -> request / client-2 -> server", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , server -> response / client-2 -> client-2" [ label="client-1 @ wait
+client-2 @ wait
+server @ ready
+client-1 -> request / client-1 -> server
+server -> response / client-2 -> client-2", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server , server -> response / client-1 -> client-1" [ label="client-1 @ wait
+client-2 @ wait
+server @ ready
+client-2 -> request / client-2 -> server
+server -> response / client-1 -> client-1", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; server -> response / client-1 -> client-1 , server -> response / client-2 -> client-2" [ label="client-1 @ wait
+client-2 @ wait
+server @ ready
+server -> response / client-1 -> client-1
+server -> response / client-2 -> client-2", shape=box, style=filled, fillcolor=aquamarine ];
+"client-1 @ idle , client-2 @ idle , server @ ready" -> "client-1 @ wait , client-2 @ idle , server @ ready ; client-1 -> request / client-1 -> server" [ label="idle
+-> time ->
+client-1" ];
+"client-1 @ idle , client-2 @ idle , server @ ready" -> "client-1 @ idle , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server" [ label="idle
+-> time ->
+client-2" ];
+"client-1 @ idle , client-2 @ wait , server @ busy / ('client-2',)" -> "client-1 @ idle , client-2 @ wait , server @ ready ; server -> response / client-2 -> client-2" [ label="busy
+-> time ->
+server" ];
+"client-1 @ idle , client-2 @ wait , server @ busy / ('client-2',)" -> "client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; client-1 -> request / client-1 -> server" [ label="idle
+-> time ->
+client-1" ];
+"client-1 @ idle , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server" -> "client-1 @ idle , client-2 @ wait , server @ busy / ('client-2',)" [ label="client-2
+-> request / client-2 ->
+server" ];
+"client-1 @ idle , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server" -> "client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , client-2 -> request / client-2 -> server" [ label="idle
+-> time ->
+client-1" ];
+"client-1 @ idle , client-2 @ wait , server @ ready ; server -> response / client-2 -> client-2" -> "client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , server -> response / client-2 -> client-2" [ label="idle
+-> time ->
+client-1" ];
+"client-1 @ idle , client-2 @ wait , server @ ready ; server -> response / client-2 -> client-2" -> "client-1 @ idle , client-2 @ idle , server @ ready" [ label="server
+-> response / client-2 ->
+client-2" ];
+"client-1 @ wait , client-2 @ idle , server @ busy / ('client-1',)" -> "client-1 @ wait , client-2 @ idle , server @ ready ; server -> response / client-1 -> client-1" [ label="busy
+-> time ->
+server" ];
+"client-1 @ wait , client-2 @ idle , server @ busy / ('client-1',)" -> "client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; client-2 -> request / client-2 -> server" [ label="idle
+-> time ->
+client-2" ];
+"client-1 @ wait , client-2 @ idle , server @ ready ; client-1 -> request / client-1 -> server" -> "client-1 @ wait , client-2 @ idle , server @ busy / ('client-1',)" [ label="client-1
+-> request / client-1 ->
+server" ];
+"client-1 @ wait , client-2 @ idle , server @ ready ; client-1 -> request / client-1 -> server" -> "client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , client-2 -> request / client-2 -> server" [ label="idle
+-> time ->
+client-2" ];
+"client-1 @ wait , client-2 @ idle , server @ ready ; server -> response / client-1 -> client-1" -> "client-1 @ wait , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server , server -> response / client-1 -> client-1" [ label="idle
+-> time ->
+client-2" ];
+"client-1 @ wait , client-2 @ idle , server @ ready ; server -> response / client-1 -> client-1" -> "client-1 @ idle , client-2 @ idle , server @ ready" [ label="server
+-> response / client-1 ->
+client-1" ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; client-2 -> request / client-2 -> server" -> "client-1 @ wait , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server , server -> response / client-1 -> client-1" [ label="busy
+-> time ->
+server" ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; client-2 -> request / client-2 -> server" -> "client-1 @ wait , client-2 @ wait , server @ busy / ('client-1', 'client-2') ! agent: server is invalid because: hold two requests" [ label="client-2
+-> request / client-2 ->
+server" ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; server -> response / client-2 -> client-2" -> "client-1 @ wait , client-2 @ wait , server @ ready ; server -> response / client-1 -> client-1 , server -> response / client-2 -> client-2" [ label="busy
+-> time ->
+server" ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; server -> response / client-2 -> client-2" -> "client-1 @ wait , client-2 @ idle , server @ busy / ('client-1',)" [ label="server
+-> response / client-2 ->
+client-2" ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; client-1 -> request / client-1 -> server" -> "client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , server -> response / client-2 -> client-2" [ label="busy
+-> time ->
+server" ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; client-1 -> request / client-1 -> server" -> "client-1 @ wait , client-2 @ wait , server @ busy / ('client-2', 'client-1') ! agent: server is invalid because: hold two requests" [ label="client-1
+-> request / client-1 ->
+server" ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; server -> response / client-1 -> client-1" -> "client-1 @ wait , client-2 @ wait , server @ ready ; server -> response / client-1 -> client-1 , server -> response / client-2 -> client-2" [ label="busy
+-> time ->
+server" ];
+"client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; server -> response / client-1 -> client-1" -> "client-1 @ idle , client-2 @ wait , server @ busy / ('client-2',)" [ label="server
+-> response / client-1 ->
+client-1" ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , client-2 -> request / client-2 -> server" -> "client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; client-2 -> request / client-2 -> server" [ label="client-1
+-> request / client-1 ->
+server" ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , client-2 -> request / client-2 -> server" -> "client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; client-1 -> request / client-1 -> server" [ label="client-2
+-> request / client-2 ->
+server" ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , server -> response / client-2 -> client-2" -> "client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; server -> response / client-2 -> client-2" [ label="client-1
+-> request / client-1 ->
+server" ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , server -> response / client-2 -> client-2" -> "client-1 @ wait , client-2 @ idle , server @ ready ; client-1 -> request / client-1 -> server" [ label="server
+-> response / client-2 ->
+client-2" ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server , server -> response / client-1 -> client-1" -> "client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; server -> response / client-1 -> client-1" [ label="client-2
+-> request / client-2 ->
+server" ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server , server -> response / client-1 -> client-1" -> "client-1 @ idle , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server" [ label="server
+-> response / client-1 ->
+client-1" ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; server -> response / client-1 -> client-1 , server -> response / client-2 -> client-2" -> "client-1 @ idle , client-2 @ wait , server @ ready ; server -> response / client-2 -> client-2" [ label="server
+-> response / client-1 ->
+client-1" ];
+"client-1 @ wait , client-2 @ wait , server @ ready ; server -> response / client-1 -> client-1 , server -> response / client-2 -> client-2" -> "client-1 @ wait , client-2 @ idle , server @ ready ; server -> response / client-1 -> client-1" [ label="server
+-> response / client-2 ->
+client-2" ];
+}
