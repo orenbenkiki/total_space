@@ -23,6 +23,9 @@ from functools import total_ordering
 from typing import *
 
 
+__version__ = '0.1.2'
+
+
 __all__ = [
     'State',
     'Message',

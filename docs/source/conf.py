@@ -15,7 +15,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../..'))
 print(os.path.abspath('../..'))
 import total_space
-import tests.simple_model
+import total_space.simple_model
 
 
 # -- Project information -----------------------------------------------------

@@ -1,17 +1,17 @@
-client-1 @ idle , client-2 @ idle , server @ ready
-client-1 @ idle , client-2 @ wait , server @ busy / ('client-2',)
-client-1 @ idle , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server
-client-1 @ idle , client-2 @ wait , server @ ready ; server -> response / client-2 -> client-2
-client-1 @ wait , client-2 @ idle , server @ busy / ('client-1',)
-client-1 @ wait , client-2 @ idle , server @ ready ; client-1 -> request / client-1 -> server
-client-1 @ wait , client-2 @ idle , server @ ready ; server -> response / client-1 -> client-1
-client-1 @ wait , client-2 @ wait , server @ busy / ('client-1', 'client-2') ! agent: server is invalid because: hold two requests
-client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; client-2 -> request / client-2 -> server
-client-1 @ wait , client-2 @ wait , server @ busy / ('client-1',) ; server -> response / client-2 -> client-2
-client-1 @ wait , client-2 @ wait , server @ busy / ('client-2', 'client-1') ! agent: server is invalid because: hold two requests
-client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; client-1 -> request / client-1 -> server
-client-1 @ wait , client-2 @ wait , server @ busy / ('client-2',) ; server -> response / client-1 -> client-1
-client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , client-2 -> request / client-2 -> server
-client-1 @ wait , client-2 @ wait , server @ ready ; client-1 -> request / client-1 -> server , server -> response / client-2 -> client-2
-client-1 @ wait , client-2 @ wait , server @ ready ; client-2 -> request / client-2 -> server , server -> response / client-1 -> client-1
-client-1 @ wait , client-2 @ wait , server @ ready ; server -> response / client-1 -> client-1 , server -> response / client-2 -> client-2
+client-0 @ idle , client-1 @ idle , server @ ready
+client-0 @ idle , client-1 @ wait , server @ busy / ('client-1',)
+client-0 @ idle , client-1 @ wait , server @ ready ; client-1 -> request / client-1 -> server
+client-0 @ idle , client-1 @ wait , server @ ready ; server -> response / client-1 -> client-1
+client-0 @ wait , client-1 @ idle , server @ busy / ('client-0',)
+client-0 @ wait , client-1 @ idle , server @ ready ; client-0 -> request / client-0 -> server
+client-0 @ wait , client-1 @ idle , server @ ready ; server -> response / client-0 -> client-0
+client-0 @ wait , client-1 @ wait , server @ busy / ('client-0', 'client-1') ! agent: server is invalid because: hold two requests
+client-0 @ wait , client-1 @ wait , server @ busy / ('client-0',) ; client-1 -> request / client-1 -> server
+client-0 @ wait , client-1 @ wait , server @ busy / ('client-0',) ; server -> response / client-1 -> client-1
+client-0 @ wait , client-1 @ wait , server @ busy / ('client-1', 'client-0') ! agent: server is invalid because: hold two requests
+client-0 @ wait , client-1 @ wait , server @ busy / ('client-1',) ; client-0 -> request / client-0 -> server
+client-0 @ wait , client-1 @ wait , server @ busy / ('client-1',) ; server -> response / client-0 -> client-0
+client-0 @ wait , client-1 @ wait , server @ ready ; client-0 -> request / client-0 -> server , client-1 -> request / client-1 -> server
+client-0 @ wait , client-1 @ wait , server @ ready ; client-0 -> request / client-0 -> server , server -> response / client-1 -> client-1
+client-0 @ wait , client-1 @ wait , server @ ready ; client-1 -> request / client-1 -> server , server -> response / client-0 -> client-0
+client-0 @ wait , client-1 @ wait , server @ ready ; server -> response / client-0 -> client-0 , server -> response / client-1 -> client-1

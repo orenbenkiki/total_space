@@ -13,8 +13,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 import glob
 import filecmp
 import pytest
-import simple_model
 import total_space
+import total_space.simple_model as simple_model
 
 
 def pytest_assertrepr_compare(op: str, left: Any, right: Any) -> List[str]:

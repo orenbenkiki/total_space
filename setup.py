@@ -3,37 +3,35 @@ from os import path
 from setuptools import setup, find_packages
 
 
-root = path.abspath(path.dirname(__file__))
-
-with open(path.join(root, 'README.rst'), encoding='utf-8') as f:
-    long_description = f.read()
-
-with open(path.join(root, 'LICENSE.txt'), encoding='utf-8') as f:
-    license = f.read()
-
-with open(path.join(root, 'VERSION.txt'), encoding='utf-8') as f:
-    version = f.read().strip()
-
-
 setup(
     name='total_space',
-    version=version,
+    version='0.1.2',
     description='Investigate the total state space of communicating finite state machines',
-    long_description=long_description,
+    long_description_content_type='text/plain',
+    long_description='''
+        Investigate the total state space of communicating finite state machines. Specifically,
+        given a model of a system comprising of multiple agents, where each agent is a
+        non-deterministic state machine, which responds to either time or receiving a message with
+        one of some possible actions, where each such action can change the agent state and/or send
+        messages to other agents; Then this package will generate the total possible state space of
+        the overall system, validate the model for completeness, validate each system state for
+        additional arbitrary correctness criteria, and visualize the states and transitions in
+        various ways.
+    ''',
     url='https://github.com/orenbenkiki/total_space',
     author='Oren Ben-Kiki',
     author_email='oren@ben-kiki.org',
-    license=license,
+    license='MIT',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Topic :: Scientific/Engineering',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.5',
     ],
     keywords='sample setuptools development',
-    packages=find_packages(),
+    packages=['total_space'],
     extras_require={
         '': ['pytest'],
     },

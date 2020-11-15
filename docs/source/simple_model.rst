@@ -1,5 +1,5 @@
 Simple Model Module
 ===================
 
-.. automodule:: tests.simple_model
+.. automodule:: total_space.simple_model
     :members:
