@@ -479,16 +479,11 @@ class System(Immutable):
 
         file.write('}\n')
 
-    def print_dot_messages(self, file: 'TextIO') -> None:
-        messages = {message_dot_label(transition.delivered_message) for transition in self.transitions}
-        for message in sorted(messages):
-            file.write('"%s" [ shape=box, style=filled, fillcolor=Turquoise ];\n' % message)
-
     def print_dot_nodes(self, file: 'TextIO', cluster_by_agents: 'Collection[str]', merge_messages) -> None:
         '''
         Print all the nodes of the ``dot`` file.
         '''
-        node_names = set()  # type: str
+        node_names = set()  # type: Set[str]
         if len(cluster_by_agents) == 0:
             for configuration in self.configurations:
                 print_dot_node(file, configuration, merge_messages, node_names)
@@ -524,14 +519,20 @@ class System(Immutable):
             current_path.pop()
             file.write('}\n')
 
-    def print_dot_edges(self, file: 'TextIO', *, separate_messages: bool, merge_messages: bool) -> None:
+    def print_dot_edges(  # pylint: disable=too-many-locals,too-many-branches
+        self,
+        file: 'TextIO',
+        *,
+        separate_messages: bool,
+        merge_messages: bool
+    ) -> None:
         '''
         Print all the edges of the ``dot`` file.
         '''
         if separate_messages:
             configuration_by_name = {configuration.name: configuration for configuration in self.configurations}
 
-        message_edges = set()
+        message_edges = set()  # type: Set[str]
         message_nodes = set()  # type: Set[str]
         intermediate_nodes = set()  # type: Set[str]
 
@@ -609,6 +610,9 @@ def print_dot_node(file: 'TextIO', configuration: Configuration, merge_messages:
 
 
 def print_dot_message(file: 'TextIO', message: Message, message_nodes: Set[str]) -> None:
+    '''
+    Print a node for an in-flight messages.
+    '''
     label = message_dot_label(message)
     if label in message_nodes:
         return

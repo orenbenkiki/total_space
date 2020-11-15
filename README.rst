@@ -36,11 +36,11 @@ Create a ``model.py`` file that:
 
 * Provides functions for:
 
-    * (Optionally) add command line flags to control the model creation.
+  * (Optionally) add command line flags to control the model creation.
 
-    * Create a function that creates the model given the parsed command line flags.
+  * Create a function that creates the model given the parsed command line flags.
 
-    * (Optionally) report invalid conditions in a global system configuration.
+  * (Optionally) report invalid conditions in a global system configuration.
 
 * Invokes the ``total_space.main`` function, passing it the above.
 
