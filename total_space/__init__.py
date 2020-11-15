@@ -156,7 +156,7 @@ class Message(State):
 
 class Action(Immutable):
     '''
-    A possible action taken by an py:const:`Agent` as a response to receiving a :py:const:`Message`.
+    A possible action taken by an :py:const:`Agent` as a response to receiving a :py:const:`Message`.
     '''
 
     __slots__ = ['name', 'next_state', 'send_messages']
@@ -183,7 +183,7 @@ class Agent(Immutable):
 
     Sub-classes should implement methods with the name ``_<message_name>_when_<state_name>``,
     which are invoked when the has a :py:const:`State` with ``state_name``,
-    and receives a py:const:`Message` with the name ``message_name``.
+    and receives a :py:const:`Message` with the name ``message_name``.
 
     Each method takes the data of the message,
     returns a tuple of alternative :py:const:`Action` possibilities.
