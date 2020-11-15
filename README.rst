@@ -101,11 +101,10 @@ In addition, it is possible to control the generated ``dot`` graph:
 
 Choosing the right combination of restrictions to highlight specific parts of the logic
 is a matter of taste and depends very much on the model and what you are trying to achieve.
+In this specific case, the following work well:
 
-In this specific case, the following generate clear state machines for the server:
-``python3 tests/simple_model.py --names --focus server dot --messages --merge | dot -Tpng > server.png``.
-Similarly
-``python3 tests/simple_model.py --names --focus client-1 dot --messages --merge | dot -Tpng > server.png``
-will focus on a specific client, while
-``python3 tests/simple_model.py --names dot --messages --merge | dot -Tpng > server.png``
-will show an only slightly more complex diagram showing both the server and the client.
+* Very simplified but complete state machine: ``--names dot --messages --merge``.
+
+* Focusing only on the server: ``--names --focus server dot --messages --merge``.
+
+* Focusing only on the client: ``--names --focus client-1 dot --messages --merge``.
