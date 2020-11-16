@@ -103,7 +103,8 @@ For example, clustering by server state (``--focus server dot --cluster server``
 <images/cluster.server.png?raw=true>`_ somewhat when focusing on the server in a two-client system -
 in particular, we can see that the server can stay indefinitely in the "busy" state if the clients
 keep hammering it with requests. We also get good results using ``--names dot --messages --merge``
-at least for `one client <images/detail.1.png>`_, if less so for `two clients <images/detail.2.png>`.
+at least for `one client <images/detail.1.png?raw=true>`_, if less so for `two clients
+<images/detail.2.png?raw=true>`_.
 
 This combination works better using ``--names --focus client-1 dot --messages --merge`` to focus on
 a `client <images/detail.client-1.png?raw=true>`_, and likewise for the server, where there is a
