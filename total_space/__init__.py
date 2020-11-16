@@ -23,7 +23,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 
 __all__ = [
@@ -532,34 +532,33 @@ class System(Immutable):
         '''
         Print all the edges of the ``dot`` file.
         '''
-        if separate_messages:
-            configuration_by_name = {configuration.name: configuration for configuration in self.configurations}
+        configuration_by_name = {configuration.name: configuration for configuration in self.configurations}
 
         message_edges = set()  # type: Set[str]
         message_nodes = set()  # type: Set[str]
         intermediate_nodes = set()  # type: Set[str]
 
         for transition in self.transitions:
+            from_configuration = configuration_by_name[transition.from_configuration_name]
+            to_configuration = configuration_by_name[transition.to_configuration_name]
+
             sent_message = None  # type: Optional[Message]
             if separate_messages:
-                from_configuration = configuration_by_name[transition.from_configuration_name]
-                to_configuration = configuration_by_name[transition.to_configuration_name]
-
                 if len(to_configuration.messages_in_flight) > len(from_configuration.messages_in_flight):
                     assert len(to_configuration.messages_in_flight) == len(from_configuration.messages_in_flight) + 1
                     for message in to_configuration.messages_in_flight:
                         if message not in from_configuration.messages_in_flight:
                             sent_message = message
 
-                if merge_messages:
-                    from_configuration = from_configuration.only_agents()
-                    to_configuration = to_configuration.only_agents()
+            if merge_messages:
+                from_configuration = from_configuration.only_agents()
+                to_configuration = to_configuration.only_agents()
 
             if not separate_messages:
                 file.write('"%s" -> "%s" [penwidth=3, label="%s"];\n'
-                           % (transition.from_configuration_name,
-                              transition.to_configuration_name,
-                              message_dot_label(transition.delivered_message)))
+                           % (from_configuration.name,
+                              to_configuration.name,
+                              message_dot_label(transition.delivered_message).replace(' | ', '\n')))
                 continue
 
             if from_configuration.name == to_configuration.name:

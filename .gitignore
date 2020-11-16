@@ -5,7 +5,6 @@ docs/build
 *junk
 junk*
 .mypy_cache
-*.png
 *.pyc
 __pycache__
 *.states

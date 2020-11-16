@@ -72,35 +72,45 @@ logic to humans.
 
 To generate diagrams for visualizing the state machine, you can run ``python3 -m
 total_space.simple_model.py dot | dot -Tpng > complete.png``. This will generate a large, detailed,
-and hard to understand diagram, which might still be useful when debugging invalid and/or partial
-models; see the results of ``--partial dot`` and/or ``--invalid dot``.
+but `complete <images/complete.png>`_ diagram, which might still be useful when debugging complex
+paths to debug `partial <images/partial.png>`_ or `invalid <images/invalid.png>`_ models.
 
-To generate more legible diagrams, it is possible to merge total system configuration states
-in three ways:
+It is possible to use ``--focus AGENT`` (possibly several times) to ignore agents which are not
+in the focus. For example, using ``--focus client-1`` focuses on a single
+`client <images/focus.client-1.png>`_, which works pretty well. We also get a pretty reasonable
+diagram focusing on the `server <images/focus.server.1.png>`_ for a single-client system;
+less so for the `two-client <images/focus.server.2.png>`_.
 
-* Using ``--names`` to ignore the internal state data.
+To generate more legible diagrams, it is possible to merge total system configuration states by
+using ``--names`` to ignore the internal state data and/or using ``--agents`` to ignore the
+messages-in-flight. Doing both gives a simpler `agents <images/agents.png>`_ diagram, at the cost of
+leaving out the messages passed between the agents and the details of their internal state.
 
-* Using ``--agents`` to ignore the messages-in-flight.
+All the above options simply rename and merge otherwise-different system configuration states. Note
+this is done as a post-processing on the computed total states space, but prior to executing the
+selected command. That is, these flags are specified before the actual command (e.g. ``--names
+--focus server dot``) and can also be applied to generate simplified states or transition files.
 
-* Using ``--focus AGENT`` (possibly several times) to ignore agents which are not in the focus.
+A different set of options modifies the graph in an additional post-processing step, just prior to
+generating the ``dot`` diagram (hence, these flags must be giving following the ``dot`` command line
+flag). Using ``--cluster AGENT`` will cluster together all nodes with the same state of the
+specified agent (possibly repeated for nested clusters). Using ``--messages`` will create a separate
+node for each in-flight message, and using ``--merge`` will merge nodes that only differ by the list
+of in-flight messages. This is different from ``--agents`` above since here we keep the transitions
+between the states, and only merge them to a single node at the last moment.
 
-These options will merge otherwise-different system configuration states. Note this is done as a
-post-processing on the computed total states space.
+For example, clustering by server state (``--focus server dot --cluster server``) will `help
+<images/cluster.server.png>` somewhat when focusing on the server in a two-client system - in
+particular, we can see that the server can stay indefinitely in the "busy" state if the clients keep
+hammering it with requests. We also get pretty good results using both the ``--messages`` and
+``--merge`` options, discarding the internal data of the agents using ``--names``, and using
+``--focus`` to focus on the `server <images/detail.client.png>`_ (using ``--names --focus client-1
+dot --messages --merge``). It even works well on the `server <images/detail.server.png>`_, with
+almost no impact from the existence of two clients. This also works pretty well demonstrating the
+issue with a `partial <images/partial.server.png>`_ or an `invalid <images/invalid.server.png>`_
+model, at least as long as the focus is on the correct agent; otherwise, the `result
+<images/partial.client.png>`_ isn't ideal.
 
-In addition, it is possible to control the generated ``dot`` graph:
-
-* Using ``--messages`` will create a separate node for each in-flight message.
-
-* Using ``--merge`` will merge nodes that only differ by the list of in-flight messages.
-  This is different from ``--agents`` above since here we keep the transitions between
-  the states, and only merge them to a single node at the last moment.
-
-Choosing the right combination of restrictions to highlight specific parts of the logic
-is a matter of taste and depends very much on the model and what you are trying to achieve.
-In this specific case, the following work well:
-
-* Very simplified but complete state machine: ``--names dot --messages --merge``.
-
-* Focusing only on the server: ``--names --focus server dot --messages --merge``.
-
-* Focusing only on the client: ``--names --focus client-1 dot --messages --merge``.
+The bottom line is, YMMV. Choosing the right combination of restrictions to highlight specific parts
+of the logic depends very much both on the model and on what you are trying to achieve in the
+specific diagram.
