@@ -23,7 +23,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 
 
 __all__ = [
@@ -583,7 +583,7 @@ class System(Immutable):
                 from_configuration = from_configuration.only_agents()
                 to_configuration = to_configuration.only_agents()
 
-            if not shown_source and from_configuration.name == to_configuration.name:
+            if not shown_source and not known_target and from_configuration.name == to_configuration.name:
                 continue
 
             if not separate_messages:
@@ -597,8 +597,11 @@ class System(Immutable):
 
             edges = []  # type: List[str]
 
-            intermediate = '%s => %s => %s => %s' \
-                % (from_configuration.name, delivered_message, sent_message is not None, to_configuration.name)
+            if sent_message is None:
+                intermediate = '%s => %s' % (from_configuration.name, to_configuration.name)
+            else:
+                intermediate = '%s => %s => %s' \
+                    % (from_configuration.name, delivered_message, to_configuration.name)
 
             if sent_message is not None:
                 print_dot_message(file, sent_message, message_nodes)
