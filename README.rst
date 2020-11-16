@@ -102,13 +102,14 @@ between the states, and only merge them to a single node at the last moment.
 For example, clustering by server state (``--focus server dot --cluster server``) will `help
 <images/cluster.server.png?raw=true>`_ somewhat when focusing on the server in a two-client system -
 in particular, we can see that the server can stay indefinitely in the "busy" state if the clients
-keep hammering it with requests. We also get pretty good results using both the ``--messages`` and
-``--merge`` options, discarding the internal data of the agents using ``--names``, and using
-``--focus`` to focus on the `client <images/detail.client-1.png?raw=true>`_ (using ``--names --focus
-client-1 dot --messages --merge``). It even works well on the server , with little impact from the
-existence of `two clients <images/detail.server.2.png?raw=true>`_ which captures subtleties not
-present with a `single client <images/detail.server.2.png?raw=true>`_. It also works pretty well
-demonstrating the issue with a `partial <images/partial.server.png?raw=true>`_ or an `invalid
+keep hammering it with requests. We also get good results using ``--names dot --messages --merge``
+at least for `one client <images/detail.1.png>`_, if less so for `two clients <images/detail.2.png>`.
+
+This combination works better using ``--names --focus client-1 dot --messages --merge`` to focus on
+a `client <images/detail.client-1.png?raw=true>`_, and likewise for the server, where there is a
+minimal impact from the existence of `two clients <images/detail.server.2.png?raw=true>`_ compared
+to a `single client <images/detail.server.1.png?raw=true>`_. It also works pretty well demonstrating
+the issue with a `partial <images/partial.server.png?raw=true>`_ or an `invalid
 <images/invalid.server.png?raw=true>`_ model, at least as long as the focus is on the correct agent;
 otherwise, the `result <images/partial.client-1.png?raw=true>`_ doesn't show the issue at all.
 

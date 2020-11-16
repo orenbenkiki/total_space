@@ -28,6 +28,12 @@ $PYTHON3 -m total_space.simple_model -f server dot -c server -l 'Cluster Focus o
 $PYTHON3 -m total_space.simple_model -a -n dot -l 'Only Agent State Names' \
 | dot -Tpng > images/agents.png
 
+$PYTHON3 -m total_space.simple_model -n -c 1 dot -m -M -l 'Detail (w/ One Client)' \
+| dot -Tpng > images/detail.1.png
+
+$PYTHON3 -m total_space.simple_model -n dot -m -M -l 'Detail (w/ Two Clients)' \
+| dot -Tpng > images/detail.2.png
+
 $PYTHON3 -m total_space.simple_model -n -f client-1 dot -m -M -l 'Client-1 Detail' \
 | dot -Tpng > images/detail.client-1.png
 
