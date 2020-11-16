@@ -105,12 +105,12 @@ in particular, we can see that the server can stay indefinitely in the "busy" st
 keep hammering it with requests. We also get pretty good results using both the ``--messages`` and
 ``--merge`` options, discarding the internal data of the agents using ``--names``, and using
 ``--focus`` to focus on the `client <images/detail.client-1.png?raw=true>`_ (using ``--names --focus
-client-1 dot --messages --merge``). It even works well on the `server
-<images/detail.server.png?raw=true>`_, with almost no impact from the existence of two clients. This
-also works pretty well demonstrating the issue with a `partial
-<images/partial.server.png?raw=true>`_ or an `invalid <images/invalid.server.png?raw=true>`_ model,
-at least as long as the focus is on the correct agent; otherwise, the `result
-<images/partial.client-1.png?raw=true>`_ isn't ideal.
+client-1 dot --messages --merge``). It even works well on the server , with little impact from the
+existence of `two clients <images/detail.server.2.png?raw=true>`_ which captures subtleties not
+present with a `single client <images/detail.server.2.png?raw=true>`_. It also works pretty well
+demonstrating the issue with a `partial <images/partial.server.png?raw=true>`_ or an `invalid
+<images/invalid.server.png?raw=true>`_ model, at least as long as the focus is on the correct agent;
+otherwise, the `result <images/partial.client-1.png?raw=true>`_ doesn't show the issue at all.
 
 The bottom line is, YMMV. Choosing the right combination of restrictions to highlight specific parts
 of the logic depends very much both on the model and on what you are trying to achieve in the

@@ -23,7 +23,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 
 __all__ = [
@@ -57,7 +57,7 @@ class Immutable:
                                % (name, self.__class__.__qualname__))
 
     def __eq__(self, other) -> bool:
-        return self.__dict__ == other.__dict__
+        return str(self) == str(other)
 
     def __lt__(self, other) -> bool:
         return str(self) < str(other)
@@ -336,7 +336,7 @@ class Transition(Immutable):
             self.to_configuration_name = to_configuration_name
 
     def __str__(self) -> str:
-        return '%s -> %s -> %s' % (self.from_configuration_name, self.delivered_message, self.to_configuration_name)
+        return '%s => %s => %s' % (self.from_configuration_name, self.delivered_message, self.to_configuration_name)
 
 
 #: The type of a function that validates a :py:const:`Configuration`,
@@ -477,26 +477,36 @@ class System(Immutable):
         file.write('edge [fontname = "Sans-Serif"];\n')
         file.write('label = "%s";\n' % label)
 
-        self.print_dot_nodes(file, cluster_by_agents, merge_messages)
-        self.print_dot_edges(file, separate_messages=separate_messages, merge_messages=merge_messages)
+        reachable_configuration_names = set()  # type: Set[str]
+        self.print_dot_edges(file, reachable_configuration_names,
+                             separate_messages=separate_messages, merge_messages=merge_messages)
+        self.print_dot_nodes(file, cluster_by_agents, reachable_configuration_names, merge_messages)
 
         file.write('}\n')
 
-    def print_dot_nodes(self, file: 'TextIO', cluster_by_agents: 'Collection[str]', merge_messages) -> None:
+    def print_dot_nodes(
+        self,
+        file: 'TextIO',
+        cluster_by_agents: 'Collection[str]',
+        reachable_configuration_names: Set[str],
+        merge_messages
+    ) -> None:
         '''
         Print all the nodes of the ``dot`` file.
         '''
         node_names = set()  # type: Set[str]
         if len(cluster_by_agents) == 0:
             for configuration in self.configurations:
-                print_dot_node(file, configuration, merge_messages, node_names)
+                if configuration.name in reachable_configuration_names:
+                    print_dot_node(file, configuration, merge_messages, node_names)
             return
 
         agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(self.configurations[0].agents)}
         cluster_by_indices = [agent_indices[agent_name] for agent_name in cluster_by_agents]
         paths = [['%s @ %s' % (configuration.agents[agent_index].name, configuration.agents[agent_index].state.name)
                   for agent_index in cluster_by_indices]
-                 for configuration in self.configurations]
+                 for configuration in self.configurations
+                 if configuration.name in reachable_configuration_names]
 
         current_path = []  # type: List[str]
         for path, configuration in sorted(zip(paths, self.configurations)):
@@ -525,6 +535,7 @@ class System(Immutable):
     def print_dot_edges(  # pylint: disable=too-many-locals,too-many-branches
         self,
         file: 'TextIO',
+        reachable_configuration_names: Set[str],
         *,
         separate_messages: bool,
         merge_messages: bool
@@ -533,12 +544,22 @@ class System(Immutable):
         Print all the edges of the ``dot`` file.
         '''
         configuration_by_name = {configuration.name: configuration for configuration in self.configurations}
+        agent_names = {agent.name for agent in list(configuration_by_name.values())[0].agents}
 
         message_edges = set()  # type: Set[str]
         message_nodes = set()  # type: Set[str]
         intermediate_nodes = set()  # type: Set[str]
 
         for transition in self.transitions:
+            delivered_message = transition.delivered_message  # type: Optional[Message]
+
+            shown_source = delivered_message.source_agent_name in agent_names
+            known_source = delivered_message.name == 'time' or shown_source
+            known_target = delivered_message.target_agent_name in agent_names
+
+            if not known_source and not known_target:
+                continue
+
             from_configuration = configuration_by_name[transition.from_configuration_name]
             to_configuration = configuration_by_name[transition.to_configuration_name]
 
@@ -547,29 +568,41 @@ class System(Immutable):
                 if len(to_configuration.messages_in_flight) > len(from_configuration.messages_in_flight):
                     assert len(to_configuration.messages_in_flight) == len(from_configuration.messages_in_flight) + 1
                     for message in to_configuration.messages_in_flight:
-                        if message not in from_configuration.messages_in_flight:
+                        if message not in from_configuration.messages_in_flight \
+                                and (message.source_agent_name in agent_names
+                                     or message.target_agent_name in agent_names):
                             sent_message = message
+                            break
 
             if merge_messages:
                 from_configuration = from_configuration.only_agents()
                 to_configuration = to_configuration.only_agents()
 
+            if not shown_source and from_configuration.name == to_configuration.name:
+                continue
+
             if not separate_messages:
+                reachable_configuration_names.add(from_configuration.name)
+                reachable_configuration_names.add(to_configuration.name)
                 file.write('"%s" -> "%s" [penwidth=3, label="%s"];\n'
                            % (from_configuration.name,
                               to_configuration.name,
-                              message_dot_label(transition.delivered_message).replace(' | ', '\n')))
+                              message_dot_label(delivered_message).replace(' | ', '\n')))
                 continue
 
-            if from_configuration.name == to_configuration.name:
-                continue
+            edges = []  # type: List[str]
 
-            intermediate = '%s -> * -> %s' % (from_configuration.name, to_configuration.name)
-            if intermediate not in intermediate_nodes:
-                file.write('"%s" [ shape=point, width=0, height=0 ];\n' % intermediate)
-                intermediate_nodes.add(intermediate)
+            intermediate = '%s => %s => %s => %s' \
+                % (from_configuration.name, delivered_message, sent_message is not None, to_configuration.name)
 
-            print_dot_message(file, transition.delivered_message, message_nodes)
+            if known_target or sent_message is not None:
+                print_dot_message(file, delivered_message, message_nodes)
+                edges.append('"%s" -> "%s" [penwidth=3, color=blue, dir=forward, arrowhead=none];\n'
+                             % (message_dot_label(delivered_message), intermediate))
+
+            if sent_message is not None:
+                print_dot_message(file, sent_message, message_nodes)
+                edges.append('"%s" -> "%s" [penwidth=3, color=blue];\n' % (intermediate, message_dot_label(sent_message)))
 
             assert from_configuration.valid
             if to_configuration.valid:
@@ -577,14 +610,22 @@ class System(Immutable):
             else:
                 color = 'red'
 
-            edges = [
-                '"%s" -> "%s" [penwidth=3, color=%s];\n' % (from_configuration.name, intermediate, color),
-                '"%s" -> "%s" [penwidth=3, color=blue];\n' % (message_dot_label(transition.delivered_message), intermediate),
-                '"%s" -> "%s" [penwidth=3, color=%s];\n' % (intermediate, to_configuration.name, color)
+            if len(edges) == 0:
+                continue
+
+            edges += [
+                '"%s" -> "%s" [penwidth=3, color=%s, dir=forward, arrowhead=none];\n'
+                    % (from_configuration.name, intermediate, color),
+                '"%s" -> "%s" [penwidth=3, color=%s];\n'
+                    % (intermediate, to_configuration.name, color)
             ]
-            if sent_message is not None:
-                print_dot_message(file, sent_message, message_nodes)
-                edges.append('"%s" -> "%s" [penwidth=3, color=blue];\n' % (intermediate, message_dot_label(sent_message)))
+
+            if intermediate not in intermediate_nodes:
+                file.write('"%s" [ shape=point, width=0, height=0 ];\n' % intermediate)
+                intermediate_nodes.add(intermediate)
+
+            reachable_configuration_names.add(from_configuration.name)
+            reachable_configuration_names.add(to_configuration.name)
 
             for edge in edges:
                 if edge not in message_edges:
