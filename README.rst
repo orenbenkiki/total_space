@@ -100,7 +100,7 @@ of in-flight messages. This is different from ``--agents`` above since here we k
 between the states, and only merge them to a single node at the last moment.
 
 For example, clustering by server state (``--focus server dot --cluster server``) will `help
-<images/cluster.server.png?raw=true>` somewhat when focusing on the server in a two-client system -
+<images/cluster.server.png?raw=true>`_ somewhat when focusing on the server in a two-client system -
 in particular, we can see that the server can stay indefinitely in the "busy" state if the clients
 keep hammering it with requests. We also get pretty good results using both the ``--messages`` and
 ``--merge`` options, discarding the internal data of the agents using ``--names``, and using
