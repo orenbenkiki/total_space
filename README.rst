@@ -79,7 +79,7 @@ It is possible to use ``--focus AGENT`` (possibly several times) to ignore agent
 the focus. For example, using ``--focus client-1`` focuses on a single `client
 <images/focus.client-1.png?raw=true>`_, which works pretty well. We also get a pretty reasonable
 diagram focusing on the `server <images/focus.server.1.png?raw=true>`_ for a single-client system;
-less so for the `two-client <images/focus.server.2.png?raw=true>`_.
+less so for `two clients <images/focus.server.2.png?raw=true>`_.
 
 To generate more legible diagrams, it is possible to merge total system configuration states by
 using ``--names`` to ignore the internal state data and/or using ``--agents`` to ignore the
@@ -104,13 +104,13 @@ For example, clustering by server state (``--focus server dot --cluster server``
 in particular, we can see that the server can stay indefinitely in the "busy" state if the clients
 keep hammering it with requests. We also get pretty good results using both the ``--messages`` and
 ``--merge`` options, discarding the internal data of the agents using ``--names``, and using
-``--focus`` to focus on the `server <images/detail.client.png?raw=true>`_ (using ``--names --focus
+``--focus`` to focus on the `client <images/detail.client-1.png?raw=true>`_ (using ``--names --focus
 client-1 dot --messages --merge``). It even works well on the `server
 <images/detail.server.png?raw=true>`_, with almost no impact from the existence of two clients. This
 also works pretty well demonstrating the issue with a `partial
 <images/partial.server.png?raw=true>`_ or an `invalid <images/invalid.server.png?raw=true>`_ model,
 at least as long as the focus is on the correct agent; otherwise, the `result
-<images/partial.client.png?raw=true>`_ isn't ideal.
+<images/partial.client-1.png?raw=true>`_ isn't ideal.
 
 The bottom line is, YMMV. Choosing the right combination of restrictions to highlight specific parts
 of the logic depends very much both on the model and on what you are trying to achieve in the
