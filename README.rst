@@ -70,7 +70,7 @@ tab-separated file using ``transitions`` instead. These are also useful for furt
 processing. However these aren't very useful in communicating the model's logic to humans.
 
 To generate diagrams for visualizing the state machine, you can run ``python3 -m
-total_space.simple_model.py dot | dot -Tpng > complete.png``. This will generate a large, detailed,
+total_space.simple_model dot | dot -Tpng > complete.png``. This will generate a large, detailed,
 but `complete <images/complete.png?raw=true>`_ diagram, which might still be useful when debugging
 complex paths to debug `partial <images/partial.png?raw=true>`_ or `invalid
 <images/invalid.png?raw=true>`_ models.
