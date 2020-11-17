@@ -117,7 +117,7 @@ otherwise, the `result <images/partial.client-1.png?raw=true>`_ doesn't show the
 It is also possible to generate interaction diagrams showing the exchange of messages between agents
 along a specific scenario using the ``time`` command. For example, we can show the `client-server
 <images/time.client-server.png?raw=true>`_ interaction. This is especially useful when investigating
-the scenario leading to an `invalid <images/time.invalid.png?raw=true>`_.
+the scenario leading to an `invalid <images/time.invalid.png?raw=true>`_ state.
 
 The bottom line is, YMMV. Choosing the right combination of restrictions to highlight specific parts
 of the logic depends very much both on the model and on what you are trying to achieve in the
