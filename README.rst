@@ -69,8 +69,8 @@ can also be useful to get a feel for the model. One can also generate all the tr
 tab-separated file using ``transitions`` instead. These are also useful for further automated
 processing. However these aren't very useful in communicating the model's logic to humans.
 
-To generate diagrams for visualizing the state machine, you can run ``python3 -m
-total_space.simple_model dot | dot -Tpng > complete.png``. This will generate a large, detailed,
+To generate diagrams for visualizing the total space of states, you can run ``python3 -m
+total_space.simple_model space | dot -Tpng > complete.png``. This will generate a large, detailed,
 but `complete <images/complete.png?raw=true>`_ diagram, which might still be useful when debugging
 complex paths to debug `partial <images/partial.png?raw=true>`_ or `invalid
 <images/invalid.png?raw=true>`_ models.
@@ -89,30 +89,35 @@ leaving out the messages passed between the agents and the details of their inte
 All the above options simply rename and merge otherwise-different system configuration states. Note
 this is done as a post-processing on the computed total states space, but prior to executing the
 selected command. That is, these flags are specified before the actual command (e.g. ``--names
---focus server dot``) and can also be applied to generate simplified states or transition files.
+--focus server space``) and can also be applied to generate simplified states or transition files.
 
 A different set of options modifies the graph in an additional post-processing step, just prior to
-generating the ``dot`` diagram (hence, these flags must be giving following the ``dot`` command line
+generating the diagram (hence, these flags must be giving following the ``space`` command line
 flag). Using ``--cluster AGENT`` will cluster together all nodes with the same state of the
 specified agent (possibly repeated for nested clusters). Using ``--messages`` will create a separate
 node for each in-flight message, and using ``--merge`` will merge nodes that only differ by the list
 of in-flight messages. This is different from ``--agents`` above since here we keep the transitions
 between the states, and only merge them to a single node at the last moment.
 
-For example, clustering by server state (``--focus server dot --cluster server``) will `help
+For example, clustering by server state (``--focus server space --cluster server``) will `help
 <images/cluster.server.png?raw=true>`_ somewhat when focusing on the server in a two-client system -
 in particular, we can see that the server can stay indefinitely in the "busy" state if the clients
-keep hammering it with requests. We also get good results using ``--names dot --messages --merge``
+keep hammering it with requests. We also get good results using ``--names space --messages --merge``
 at least for `one client <images/detail.1.png?raw=true>`_, if less so for `two clients
 <images/detail.2.png?raw=true>`_.
 
-This combination works better using ``--names --focus client-1 dot --messages --merge`` to focus on
+This combination works better using ``--names --focus client-1 space --messages --merge`` to focus on
 a `client <images/detail.client-1.png?raw=true>`_, and likewise for the server, where there is a
 minimal impact from the existence of `two clients <images/detail.server.2.png?raw=true>`_ compared
 to a `single client <images/detail.server.1.png?raw=true>`_. It also works pretty well demonstrating
 the issue with a `partial <images/partial.server.png?raw=true>`_ or an `invalid
 <images/invalid.server.png?raw=true>`_ model, at least as long as the focus is on the correct agent;
 otherwise, the `result <images/partial.client-1.png?raw=true>`_ doesn't show the issue at all.
+
+It is also possible to generate interaction diagrams showing the exchange of messages between agents
+along a specific scenario using the ``time`` command. For example, we can show the `client-server
+<images/time.client-server.png?raw=true>`_ interaction. This is especially useful when investigating
+the scenario leading to an `invalid <images/time.invalid.png?raw=true>`_.
 
 The bottom line is, YMMV. Choosing the right combination of restrictions to highlight specific parts
 of the logic depends very much both on the model and on what you are trying to achieve in the

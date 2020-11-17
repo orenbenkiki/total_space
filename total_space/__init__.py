@@ -11,19 +11,21 @@ Investigate the total state space of communicating state machines.
 # pylint: disable=no-name-in-module
 # pylint: disable=pointless-statement
 # pylint: disable=too-few-public-methods
+# pylint: disable=too-many-lines
 # pylint: disable=unused-wildcard-import
 # pylint: disable=wildcard-import
 
 
 from argparse import ArgumentParser
 from argparse import Namespace
+import re
 import sys
 from contextlib import contextmanager
 from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.5'
+__version__ = '0.1.6'
 
 
 __all__ = [
@@ -31,6 +33,7 @@ __all__ = [
     'Message',
     'Action',
     'Agent',
+    'Invalid',
     'Configuration',
     'Transition',
     'System',
@@ -143,6 +146,12 @@ class Message(State):
 
     def __str__(self) -> str:
         return '%s -> %s -> %s' % (self.source_agent_name, State.__str__(self), self.target_agent_name)
+
+    def validate(self) -> 'Collection[str]':  # pylint: disable=no-self-use
+        '''
+        Return a hopefully empty collection of reasons the state is invalid.
+        '''
+        return ()
 
     def only_names(self) -> 'Message':
         '''
@@ -439,10 +448,15 @@ class System(Immutable):
         for configuration in self.configurations:
             file.write('%s\n' % configuration.name)
 
-    def print_transitions(self, file: 'TextIO') -> None:
+    def print_transitions(self, file: 'TextIO', path: List[str]) -> None:
         '''
         Print a list of all the transitions between system configurations to a tab-separated file.
         '''
+        if len(path) > 0:
+            transitions = self.transitions_path(path)  # type: Collection[Transition]
+        else:
+            transitions = self.transitions
+
         file.write('from_configuration_name\t')
         file.write('delivered_message_source_agent_name\t')
         file.write('delivered_message_name\t')
@@ -450,7 +464,7 @@ class System(Immutable):
         file.write('delivered_message_target_agent_name\t')
         file.write('to_configuration_name\n')
 
-        for transition in self.transitions:
+        for transition in transitions:
             file.write('%s\t' % transition.from_configuration_name)
             file.write('%s\t' % transition.delivered_message.source_agent_name)
             file.write('%s\t' % transition.delivered_message.name)
@@ -458,7 +472,83 @@ class System(Immutable):
             file.write('%s\t' % transition.delivered_message.target_agent_name)
             file.write('%s\n' % transition.to_configuration_name)
 
-    def print_dot(
+    def transitions_path(self, paths: List[str]) -> List[Transition]:
+        '''
+        Return the path of transitions between configurations matching the patterns.
+        '''
+        assert len(paths) > 1
+
+        initial_configuration_names = self.matching_configuration_names(paths[0])
+        if len(initial_configuration_names) != 1:
+            raise ValueError('first regexp pattern: %s matches more than one configuration' % paths[0])
+
+        configuration_name = initial_configuration_names[0]
+
+        outgoing_transitions = {}  # type: Dict[str, List[Transition]]
+        for transition in self.transitions:
+            transitions_list = outgoing_transitions.get(transition.from_configuration_name)
+            if transitions_list is None:
+                transitions_list = outgoing_transitions[transition.from_configuration_name] = []
+            transitions_list.append(transition)
+
+        transitions = []  # type: List[Transition]
+        for pattern in paths[1:]:
+            self.shortest_path(configuration_name, pattern, outgoing_transitions, transitions)
+            configuration_name = transitions[-1].to_configuration_name
+
+        return transitions
+
+    def shortest_path(
+        self,
+        from_configuration_name: str,
+        to_pattern: str,
+        outgoing_transitions: Dict[str, List[Transition]],
+        transitions: List[Transition]
+    ) -> None:
+        '''
+        Return the shortest path from a specific configuration to a configuration that matches the specified pattern.
+        '''
+        to_configuration_names = set(self.matching_configuration_names(to_pattern))
+
+        near_pending = [(from_configuration_name, [])]  # type: List[Tuple[str, List[Transition]]]
+        far_pending = []  # type: List[Tuple[str, List[Transition]]]
+        visited_configuration_names = set()  # type: Set[str]
+        while len(near_pending) > 0:
+            configuration_name, near_transitions = near_pending.pop()
+            if configuration_name not in visited_configuration_names:
+                visited_configuration_names.add(configuration_name)
+
+                for transition in outgoing_transitions[configuration_name]:
+                    far_transitions = near_transitions + [transition]
+                    if transition.to_configuration_name in to_configuration_names:
+                        transitions.extend(far_transitions)
+                        return
+
+                    far_pending.append((transition.to_configuration_name, far_transitions))
+
+            if len(near_pending) == 0:
+                near_pending = far_pending
+                far_pending = []
+
+        raise RuntimeError('there is no path from the configuration: %s to a configuration matching the pattern: %s'
+                           % (from_configuration_name, to_pattern))
+
+    def matching_configuration_names(self, pattern: str) -> List[str]:
+        '''
+        Return all the names of the configurations that match a pattern.
+        '''
+        try:
+            regexp = re.compile(pattern)
+        except BaseException:
+            raise ValueError('invalid regexp pattern: %s' % pattern)
+
+        configuration_names = [configuration.name for configuration in self.configurations if regexp.search(configuration.name)]
+        if len(configuration_names) == 0:
+            raise ValueError('the regexp pattern: %s does not match any configurations' % pattern)
+
+        return configuration_names
+
+    def print_space(
         self,
         file: 'TextIO',
         *,
@@ -468,23 +558,24 @@ class System(Immutable):
         merge_messages: bool = False
     ) -> None:
         '''
-        Print a ``dot`` file visualizing all the possible system configuration states and the transitions between them.
+        Print a ``dot`` file visualizing the space of the possible system configuration states and
+        the transitions between them.
         '''
         file.write('digraph G {\n')
         file.write('fontname = "Sans-Serif";\n')
         file.write('fontsize = 32;\n')
-        file.write('node [fontname = "Sans-Serif"];\n')
-        file.write('edge [fontname = "Sans-Serif"];\n')
+        file.write('node [ fontname = "Sans-Serif" ];\n')
+        file.write('edge [ fontname = "Sans-Serif" ];\n')
         file.write('label = "%s";\n' % label)
 
         reachable_configuration_names = set()  # type: Set[str]
-        self.print_dot_edges(file, reachable_configuration_names,
-                             separate_messages=separate_messages, merge_messages=merge_messages)
-        self.print_dot_nodes(file, cluster_by_agents, reachable_configuration_names, merge_messages)
+        self.print_space_edges(file, reachable_configuration_names,
+                               separate_messages=separate_messages, merge_messages=merge_messages)
+        self.print_space_nodes(file, cluster_by_agents, reachable_configuration_names, merge_messages)
 
         file.write('}\n')
 
-    def print_dot_nodes(
+    def print_space_nodes(  # pylint: disable=too-many-locals
         self,
         file: 'TextIO',
         cluster_by_agents: 'Collection[str]',
@@ -496,14 +587,14 @@ class System(Immutable):
         '''
         node_names = set()  # type: Set[str]
         if merge_messages:
-            configurations = [configuration.only_agents() for configuration in self.configurations]
+            configurations = tuple([configuration.only_agents() for configuration in self.configurations])
         else:
             configurations = self.configurations
 
         if len(cluster_by_agents) == 0:
             for configuration in configurations:
                 if configuration.name in reachable_configuration_names:
-                    print_dot_node(file, configuration, node_names)
+                    print_space_node(file, configuration, node_names)
             return
 
         agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(configurations[0].agents)}
@@ -531,13 +622,13 @@ class System(Immutable):
                 file.write('fontsize = 24;\n')
                 file.write('label = "%s";\n' % cluster)
 
-            print_dot_node(file, configuration, node_names)
+            print_space_node(file, configuration, node_names)
 
         while len(current_path) > 0:
             current_path.pop()
             file.write('}\n')
 
-    def print_dot_edges(  # pylint: disable=too-many-locals,too-many-branches
+    def print_space_edges(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         self,
         file: 'TextIO',
         reachable_configuration_names: Set[str],
@@ -589,10 +680,10 @@ class System(Immutable):
             if not separate_messages:
                 reachable_configuration_names.add(from_configuration.name)
                 reachable_configuration_names.add(to_configuration.name)
-                file.write('"%s" -> "%s" [penwidth=3, label="%s"];\n'
+                file.write('"%s" -> "%s" [ penwidth=3, label="%s" ];\n'
                            % (from_configuration.name,
                               to_configuration.name,
-                              message_dot_label(delivered_message).replace(' | ', '\n')))
+                              message_space_label(delivered_message).replace(' | ', '\n')))
                 continue
 
             edges = []  # type: List[str]
@@ -604,16 +695,16 @@ class System(Immutable):
                     % (from_configuration.name, delivered_message, to_configuration.name)
 
             if sent_message is not None:
-                print_dot_message(file, sent_message, message_nodes)
-                edges.append('"%s" -> "%s" [penwidth=3, color=blue];\n' % (intermediate, message_dot_label(sent_message)))
+                print_space_message(file, sent_message, message_nodes)
+                edges.append('"%s" -> "%s" [ penwidth=3, color=blue ];\n' % (intermediate, message_space_label(sent_message)))
                 arrowhead = 'none'
             else:
                 arrowhead = 'normal'
 
             if known_target or sent_message is not None:
-                print_dot_message(file, delivered_message, message_nodes)
-                edges.append('"%s" -> "%s" [penwidth=3, color=blue, dir=forward, arrowhead=%s];\n'
-                             % (message_dot_label(delivered_message), intermediate, arrowhead))
+                print_space_message(file, delivered_message, message_nodes)
+                edges.append('"%s" -> "%s" [ penwidth=3, color=blue, dir=forward, arrowhead=%s ];\n'
+                             % (message_space_label(delivered_message), intermediate, arrowhead))
 
             assert from_configuration.valid
             if to_configuration.valid:
@@ -628,9 +719,9 @@ class System(Immutable):
             reachable_configuration_names.add(to_configuration.name)
 
             edges += [
-                '"%s" -> "%s" [penwidth=3, color=%s, dir=forward, arrowhead=none];\n'
+                '"%s" -> "%s" [ penwidth=3, color=%s, dir=forward, arrowhead=none ];\n'
                     % (from_configuration.name, intermediate, color),
-                '"%s" -> "%s" [penwidth=3, color=%s];\n'
+                '"%s" -> "%s" [ penwidth=3, color=%s ];\n'
                     % (intermediate, to_configuration.name, color)
             ]
 
@@ -643,8 +734,58 @@ class System(Immutable):
                     file.write(edge)
                     message_edges.add(edge)
 
+    def print_time(self, file: 'TextIO', label: str, path: List[str]) -> None:  # pylint: disable=too-many-locals
+        '''
+        Print a ``dot`` file visualizing the interaction between agents along the specified path.
+        '''
+        transitions = self.transitions_path(path)
 
-def print_dot_node(file: 'TextIO', configuration: Configuration, node_names: Set[str]) -> None:
+        configuration_by_name = {configuration.name: configuration for configuration in self.configurations}
+        agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(self.configurations[0].agents)}
+
+        message_id_by_times, message_lifetime_by_id = message_times(transitions, configuration_by_name)
+
+        file.write('digraph G {\n')
+        file.write('fontname = "Sans-Serif";\n')
+        file.write('fontsize = 32;\n')
+        file.write('node [ fontname = "Sans-Serif" ];\n')
+        file.write('edge [ fontname = "Sans-Serif" ];\n')
+        file.write('label = "%s";\n' % label)
+
+        final_configuration = configuration_by_name[transitions[-1].to_configuration_name]
+        for invalid in final_configuration.invalids:
+            print_invalid_time_node(file, invalid)
+
+        printed_messages = set()  # type: Set[int]
+
+        for agent in self.configurations[0].agents:
+            last_agent_node, last_message_name, last_message_node = \
+                print_agent_time_nodes(file, transitions, configuration_by_name, message_id_by_times,
+                                       agent.name, agent_indices[agent.name])
+
+            for message_id, (message, first_time, last_time) in message_lifetime_by_id.items():
+                if message.source_agent_name == agent.name:
+                    print_message_time_nodes(file, message_id, message, first_time, last_time)
+                    printed_messages.add(message_id)
+
+            file.write('}\n')
+
+            for invalid in final_configuration.invalids:
+                if invalid.kind == 'agent' and invalid.name == agent.name:
+                    file.write('"%s" -> "%s" [ penwidth=3, color=red, weight=1000 ];\n' % (last_agent_node, str(invalid)))
+                elif invalid.kind == 'message' and invalid.name == last_message_name:
+                    file.write('"%s" -> "%s" [ penwidth=3, color=red, weight=1000 ];\n' % (last_message_node, str(invalid)))
+                else:
+                    file.write('"%s" -> "%s" [ style=invis ];\n' % (last_agent_node, str(invalid)))
+
+        for message_id, (message, first_time, last_time) in message_lifetime_by_id.items():
+            if message_id not in printed_messages:
+                print_message_time_nodes(file, message_id, message, first_time, last_time)
+
+        file.write('}\n')
+
+
+def print_space_node(file: 'TextIO', configuration: Configuration, node_names: Set[str]) -> None:
     '''
     Print a node for a system configuration state.
     '''
@@ -661,22 +802,193 @@ def print_dot_node(file: 'TextIO', configuration: Configuration, node_names: Set
     file.write('"%s" [ label="%s", shape=box, style=filled, fillcolor=%s ];\n' % (configuration.name, label, color))
 
 
-def print_dot_message(file: 'TextIO', message: Message, message_nodes: Set[str]) -> None:
+def print_space_message(file: 'TextIO', message: Message, message_nodes: Set[str]) -> None:
     '''
     Print a node for an in-flight messages.
     '''
-    label = message_dot_label(message)
+    label = message_space_label(message)
     if label in message_nodes:
         return
     message_nodes.add(label)
-    file.write('"%s" [ label="{%s}", shape=record, style=filled, fillcolor=Turquoise ];\n' % (label, label))
+    file.write('"%s" [ label="{%s}", shape=record, style=filled, fillcolor=turquoise ];\n' % (label, label))
 
 
-def message_dot_label(message: Message) -> str:
+def message_space_label(message: Message) -> str:
     '''
     The label to show for a message.
     '''
     return '%s &rarr; | %s | &rarr; %s' % (message.source_agent_name, State.__str__(message), message.target_agent_name)
+
+
+def message_times(  # pylint: disable=too-many-locals
+    transitions: List[Transition],
+    configuration_by_name: Dict[str, Configuration]
+) -> Tuple[Dict[Tuple[int, str], int], Dict[int, Tuple[Message, int, int]]]:
+    '''
+    Return for each time and message the unique message id,
+    and for each unique message id the message and the first and last time it existed.
+    '''
+    message_id_by_times = {}  # type: Dict[Tuple[int, str], int]
+    message_lifetime_by_id = {}  # type: Dict[int, Tuple[Message, int, int]]
+    active_messages = {}  # type: Dict[str, Tuple[Message, int, int]]
+
+    time_counter = 0
+    configuration = configuration_by_name[transitions[0].from_configuration_name]
+
+    for message in configuration.messages_in_flight:
+        message_text = str(message)
+        if message_text in active_messages.keys():
+            raise NotImplementedError('multiple instances of the same message: %s' % message_text)
+        message_id = len(active_messages)
+        message_id_by_times[(0, message_text)] = message_id
+        active_messages[message_text] = (message, message_id, 0)
+
+    next_message_id = len(active_messages)
+
+    for transition in transitions:
+        to_configuration = configuration_by_name[transition.to_configuration_name]
+        to_time_counter = time_counter + 1
+        to_active_messages = {}  # type: Dict[str, Tuple[Message, int, int]]
+
+        for message in to_configuration.messages_in_flight:
+            message_text = str(message)
+            if message_text in to_active_messages:
+                raise NotImplementedError('multiple instances of the same message: %s' % message_text)
+
+            active = active_messages.get(message_text)
+            if active is None:
+                active = (message, next_message_id, to_time_counter)
+                next_message_id += 1
+            to_active_messages[message_text] = active
+            message_id_by_times[(to_time_counter, message_text)] = active[1]
+
+        for message_text, (message, message_id, first_time_counter) in active_messages.items():
+            if message_text not in to_active_messages:
+                message_lifetime_by_id[message_id] = (message, first_time_counter, time_counter)
+
+        configuration = to_configuration
+        time_counter = to_time_counter
+        active_messages = to_active_messages
+
+    for message_text, (message, message_id, first_time_counter) in active_messages.items():
+        if message_text not in to_active_messages:
+            message_lifetime_by_id[message_id] = (message, first_time_counter, time_counter)
+
+    return message_id_by_times, message_lifetime_by_id
+
+
+def print_message_time_nodes(file: 'TextIO', message_id: int, message: Message, first_time: int, last_time: int) -> None:
+    '''
+    Print all the time nodes for a message exchanged between agents.
+    '''
+    prev_node = ''
+    for time in range(first_time, last_time + 1):
+        node = 'message-%s-%s' % (message_id, time)
+        if prev_node != '':
+            file.write('"%s" [ shape=point, width=0, height=0 ];\n' % node)
+            file.write('"%s" -> "%s" [ penwidth=3, color=blue, weight=1000, dir=forward, arrowhead=none ];\n' % (prev_node, node))
+        else:
+            file.write('"%s" [ label="%s", shape=box, style=filled, color=turquoise ];\n' % (node, State.__str__(message)))
+
+    head_node = ''
+    for time in range(0, first_time + 1):
+        node = 'message-%s-%s' % (message_id, time)
+        if time != first_time:
+            file.write('"%s" [ shape=none, label="" ];\n' % node)
+        if head_node != '':
+            file.write('"%s" -> "%s" [ style=invis ];\n' % (head_node, node))
+        head_node = node
+
+
+def print_invalid_time_node(file: 'TextIO', invalid: Invalid) -> str:
+    '''
+    Print a node for a final invalid state message.
+    '''
+    node = str(invalid)
+    file.write('"%s" [ label="%s", shape=box, style=filled, fillcolor=lightcoral ];\n'
+               % (node, node.replace('because: ', 'because:\n')))
+    return node
+
+
+def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-arguments
+    file: 'TextIO',
+    transitions: List[Transition],
+    configuration_by_name: Dict[str, Configuration],
+    message_id_by_times: Dict[Tuple[int, str], int],
+    agent_name: str,
+    agent_index: int
+) -> Tuple[str, Optional[str], Optional[str]]:
+    '''
+    Print the interaction nodes for a specific agent.
+    '''
+
+    file.write('subgraph "cluster_agent_%s" {\n' % agent_name)
+    file.write('fontsize = 24;\n')
+    file.write('label = "%s";\n' % agent_name)
+
+    time_counter = 0
+    configuration = configuration_by_name[transitions[0].from_configuration_name]
+    agent = configuration.agents[agent_index]
+
+    last_agent_node = print_agent_state_node(file, time_counter, agent, None)
+    last_message_node = None  # type: Optional[str]
+    last_message_name = None  # type: Optional[str]
+
+    for transition in transitions:
+        to_time_counter = time_counter + 1
+        to_configuration = configuration_by_name[transition.to_configuration_name]
+        to_agent = to_configuration.agents[agent_index]
+
+        agent_node = print_agent_state_node(file, to_time_counter, to_agent, agent.state)
+        file.write('"%s" -> "%s" [ penwidth=3, color=green, weight=1000, dir=forward, arrowhead=none ];\n'
+                   % (last_agent_node, agent_node))
+        last_agent_node = agent_node
+
+        if len(to_configuration.messages_in_flight) > len(configuration.messages_in_flight):
+            assert len(to_configuration.messages_in_flight) == len(configuration.messages_in_flight) + 1
+            for message in to_configuration.messages_in_flight:
+                if message not in configuration.messages_in_flight and message.source_agent_name == agent_name:
+                    message_id = message_id_by_times[(to_time_counter, str(message))]
+                    last_message_name = message.name
+                    last_message_node = 'message-%s-%s' % (message_id, to_time_counter)
+                    file.write('"%s":c -> "%s" [ penwidth=3, color=blue, constraint=false ];\n'
+                               % (last_agent_node, last_message_node))
+
+        message = transition.delivered_message
+        if message.target_agent_name == agent_name:
+            if message.name == 'time':
+                message_node = print_time_message_node(file, message, time_counter)
+            else:
+                message_id = message_id_by_times[(time_counter, str(message))]
+                message_node = 'message-%s-%s' % (message_id, time_counter)
+            file.write('"%s" -> "%s":c [ penwidth=3, color=blue ];\n' % (message_node, agent_node))
+
+        time_counter = to_time_counter
+        configuration = to_configuration
+        agent = to_agent
+
+    return last_agent_node, last_message_name, last_message_node
+
+
+def print_time_message_node(file: 'TextIO', message: Message, time_counter: int) -> str:
+    '''
+    Print a node for a time message that triggered a transition.
+    '''
+    node = '%s-time-%s' % (message.target_agent_name, time_counter)
+    file.write('"%s" [ label="time", shape=box, style=filled, color=turquoise ];\n' % node)
+    return node
+
+
+def print_agent_state_node(file: 'TextIO', time_counter: int, agent: Agent, prev_state: Optional[State]) -> str:
+    '''
+    Print a node along an agent's timeline.
+    '''
+    node = '%s@%s' % (agent.name, time_counter)
+    if agent.state == prev_state:
+        file.write('"%s" [ shape=point, width=0, height=0 ];\n' % node)
+    else:
+        file.write('"%s" [ shape=box, label="%s", style=filled, color=aquamarine ];\n' % (node, agent.state))
+    return node
 
 
 class Model:
@@ -762,7 +1074,11 @@ class Model:
         else:
             new_agent = agent.with_state(action.next_state)
             invalids = [Invalid(kind='agent', name=agent.name, reason=reason)
-                         for reason in action.next_state.validate()]
+                        for reason in action.next_state.validate()]
+
+        for sent_message in action.send_messages:
+            for reason in sent_message.validate():
+                invalids.append(Invalid(kind='message', name=sent_message.name, reason=reason))
 
         self.new_transition(configuration, new_agent, agent_index, message, message_index, invalids, action.send_messages)
 
@@ -885,21 +1201,55 @@ def main(
 
     subparsers = parser.add_subparsers(title='command', metavar='')
 
-    states_parser = subparsers.add_parser('states', help='Print a list of all possible system states.')
+    states_parser = subparsers.add_parser('states', help='Print a list of all possible system states.',
+                                          epilog='''
+        Generate a simple list of all states, one per line.
+    ''')
     states_parser.set_defaults(function=states_command)
 
     transitions_parser = subparsers.add_parser('transitions',
-                                               help='Print a tab-separated file of all transitions between system states.')
-    transitions_parser.set_defaults(function=transitions_command)
+                                               help='Print a tab-separated file of all transitions between system states.',
+                                               epilog='''
+        Generate a tab-separated file, with headers, containing transitions between system states.
+        The columns in the file are: from_configuration_name, delivered_message_source_agent_name,
+        delivered_message_name, delivered_message_data, delivered_message_target_agent_name, and
+        to_configuration_name.
 
-    dot_parser = subparsers.add_parser('dot', help='Print a graphviz dot file visualizing the dot between system states.')
-    dot_parser.add_argument('-l', '--label', metavar='STR', default='Total Space', help='Specify a label for the graph.')
-    dot_parser.add_argument('-c', '--cluster', metavar='AGENT', action='append', default=[],
-                            help='Cluster nodes according to the states of the specified agent. Repeat for nesting clusters.')
-    dot_parser.add_argument('-m', '--messages', action='store_true', help='Create separate nodes for messages.')
-    dot_parser.add_argument('-M', '--merge', action='store_true',
-                            help='Merge nodes that only differ by in-flight messages.')
-    dot_parser.set_defaults(function=dot_command)
+        By default lists all transitions. If two or more `--configuration PATTERN` flags are
+        specified, generate a list showing the shortest path between the matching configurations.
+        The first pattern must match only a single configuration, to identify a unique starting
+        point for the path.
+    ''')
+    transitions_parser.set_defaults(function=transitions_command)
+    transitions_parser.add_argument('-c', '--configuration', metavar='PATTERN', action='append', default=[],
+                                    help='Generate only a path going through a configuration matching the regexp pattern.')
+
+    space_parser = subparsers.add_parser('space', help='Print a graphviz dot file visualizing the states space.',
+                                         epilog='''
+        Generate a graphviz `dot` diagram visualizing the states space. By default generates a
+        diagram containing "everything", which has the advantage of completeness but is unwieldy for
+        even simple systems. Typically one uses a combination of flags to restrict the amount of
+        information included in the diagram. Selecting the right combination depends on both the
+        model and what you are trying to achieve. See the README file for some examples.
+    ''')
+    space_parser.add_argument('-l', '--label', metavar='STR', default='Total Space', help='Specify a label for the graph.')
+    space_parser.add_argument('-c', '--cluster', metavar='AGENT', action='append', default=[],
+                              help='Cluster nodes according to the states of the specified agent. Repeat for nesting clusters.')
+    space_parser.add_argument('-m', '--messages', action='store_true', help='Create separate nodes for messages.')
+    space_parser.add_argument('-M', '--merge', action='store_true',
+                              help='Merge nodes that only differ by in-flight messages.')
+    space_parser.set_defaults(function=space_command)
+
+    time_parser = subparsers.add_parser('time', help='Print a graphviz dot file visualizing an interaction path.',
+                                         epilog='''
+        Generate a graphviz `dot` diagram visualizing the interactions between agents along a path
+        between configurations. This requires specifying the `--configuration` flag at least twice
+        to identify the path.
+    ''')
+    time_parser.add_argument('-l', '--label', metavar='STR', default='Total Space', help='Specify a label for the graph.')
+    time_parser.add_argument('-c', '--configuration', metavar='PATTERN', action='append', default=[],
+                             help='Generate a path going through a configuration matching the regexp pattern.')
+    time_parser.set_defaults(function=time_command)
 
     args = parser.parse_args(sys.argv[1:])
     system = System.compute(agents=model(args), validate=validate)
@@ -920,19 +1270,30 @@ def states_command(_args: Namespace, file: 'TextIO', system: System) -> None:
     system.print_states(file)
 
 
-def transitions_command(_args: Namespace, file: 'TextIO', system: System) -> None:
+def transitions_command(args: Namespace, file: 'TextIO', system: System) -> None:
     '''
     Implement the ``transitions`` command.
     '''
-    system.print_transitions(file)
+    if len(args.configuration) == 1:
+        raise ValueError('configurations path must contain at least two patterns')
+    system.print_transitions(file, args.configuration)
 
 
-def dot_command(args: Namespace, file: 'TextIO', system: System) -> None:
+def space_command(args: Namespace, file: 'TextIO', system: System) -> None:
     '''
-    Implement the ``dot`` command.
+    Implement the ``space`` command.
     '''
-    system.print_dot(file, cluster_by_agents=args.cluster, label=args.label,
-                     separate_messages=args.messages, merge_messages=args.merge)
+    system.print_space(file, cluster_by_agents=args.cluster, label=args.label,
+                       separate_messages=args.messages, merge_messages=args.merge)
+
+
+def time_command(args: Namespace, file: 'TextIO', system: System) -> None:
+    '''
+    Implement the ``time`` command.
+    '''
+    if len(args.configuration) < 2:
+        raise ValueError('configurations path must contain at least two patterns')
+    system.print_time(file, args.label, args.configuration)
 
 
 @contextmanager
