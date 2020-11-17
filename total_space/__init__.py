@@ -25,7 +25,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.6'
+__version__ = '0.1.7'
 
 
 __all__ = [
@@ -930,16 +930,17 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
     configuration = configuration_by_name[transitions[0].from_configuration_name]
     agent = configuration.agents[agent_index]
 
-    last_agent_node = print_agent_state_node(file, time_counter, agent, None)
+    last_agent_node = print_agent_state_node(file, time_counter, agent, True)
     last_message_node = None  # type: Optional[str]
     last_message_name = None  # type: Optional[str]
 
-    for transition in transitions:
+    for (transition_index, transition) in enumerate(transitions):
         to_time_counter = time_counter + 1
         to_configuration = configuration_by_name[transition.to_configuration_name]
         to_agent = to_configuration.agents[agent_index]
 
-        agent_node = print_agent_state_node(file, to_time_counter, to_agent, agent.state)
+        agent_node = print_agent_state_node(file, to_time_counter, to_agent,
+                                            transition_index == len(transitions) - 1 or agent.state != to_agent.state)
         file.write('"%s" -> "%s" [ penwidth=3, color=green, weight=1000, dir=forward, arrowhead=none ];\n'
                    % (last_agent_node, agent_node))
         last_agent_node = agent_node
@@ -979,15 +980,15 @@ def print_time_message_node(file: 'TextIO', message: Message, time_counter: int)
     return node
 
 
-def print_agent_state_node(file: 'TextIO', time_counter: int, agent: Agent, prev_state: Optional[State]) -> str:
+def print_agent_state_node(file: 'TextIO', time_counter: int, agent: Agent, print_state: bool) -> str:
     '''
     Print a node along an agent's timeline.
     '''
     node = '%s@%s' % (agent.name, time_counter)
-    if agent.state == prev_state:
-        file.write('"%s" [ shape=point, width=0, height=0 ];\n' % node)
-    else:
+    if print_state:
         file.write('"%s" [ shape=box, label="%s", style=filled, color=aquamarine ];\n' % (node, agent.state))
+    else:
+        file.write('"%s" [ shape=point, width=0, height=0 ];\n' % node)
     return node
 
 
