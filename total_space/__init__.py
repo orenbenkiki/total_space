@@ -25,7 +25,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.7'
+__version__ = '0.1.8'
 
 
 __all__ = [
