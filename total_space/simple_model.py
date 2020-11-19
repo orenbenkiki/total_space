@@ -39,20 +39,16 @@ class ClientAgent(Agent):
         '''
         return ClientAgent(name=name, state=CLIENT_IDLE_STATE)
 
-    def _time_when_wait(self, _data: Any) -> Tuple[Action, ...]:
-        return ()
+    def _time_when_wait(self, _message: Message) -> List[Action]:
+        return [Action.NOP]
 
-    def _time_when_idle(self, _data: Any) -> Tuple[Action, ...]:
-        request = Message(source_agent_name=self.name, name='request', target_agent_name='server', data=self.name)
-        return (
-            Action(name='send_request', next_state=CLIENT_WAIT_STATE, send_messages=(request,)),
-        )
+    def _time_when_idle(self, _message: Message) -> List[Action]:
+        request = Message(source_agent_name=self.name, target_agent_name='server', state=State(name='request', data=self.name))
+        return [Action(name='send_request', next_state=CLIENT_WAIT_STATE, send_messages=(request,))]
 
-    def _response_when_wait(self, data: Any) -> Tuple[Action, ...]:
-        assert data == self.name
-        return (
-            Action(name='receive_response', next_state=CLIENT_IDLE_STATE, send_messages=()),
-        )
+    def _response_when_wait(self, message: Message) -> List[Action]:
+        assert message.state.data == self.name
+        return [Action(name='receive_response', next_state=CLIENT_IDLE_STATE, send_messages=())]
 
 
 class InvalidServerState(State):
@@ -100,36 +96,29 @@ class PartialServerAgent(Agent):
         '''
         return cls(name=name, state=SERVER_READY_STATE)
 
-    def _time_when_busy(self, _data: Any) -> Tuple[Action, ...]:
+    def _time_when_busy(self, _message: Message) -> List[Action]:
         assert len(self.state.data) > 0
         done_client_name = self.state.data[0]
         remaining_client_names = self.state.data[1:]
         response = Message(source_agent_name=self.name,
-                           name='response',
                            target_agent_name=done_client_name,
-                           data=done_client_name)
+                           state=State(name='response', data=done_client_name))
 
         if len(remaining_client_names) == 0:
-            return (
-                Action(name='done', next_state=SERVER_READY_STATE, send_messages=(response,)),
-            )
+            return [Action(name='done', next_state=SERVER_READY_STATE, send_messages=(response,))]
         else:
             next_state = SERVER_STATE(name='busy', data=remaining_client_names)
-            return (
-                Action(name='next', next_state=next_state, send_messages=(response,)),
-            )
+            return [Action(name='next', next_state=next_state, send_messages=(response,))]
 
-    def _request_when_ready(self, data: Any) -> Tuple[Action, ...]:
-        return self._request_when_any(data)
+    def _request_when_ready(self, message: Message) -> List[Action]:
+        return self._request_when_any(message)
 
-    def _request_when_busy(self, data: Any) -> Tuple[Action, ...]:
-        return self._request_when_any(data)
+    def _request_when_busy(self, message: Message) -> List[Action]:
+        return self._request_when_any(message)
 
-    def _request_when_any(self, data: Any) -> Tuple[Action, ...]:
-        next_state = SERVER_STATE(name='busy', data=self.state.data + (data,))
-        return (
-            Action(name='receive_request', next_state=next_state, send_messages=()),
-        )
+    def _request_when_any(self, message: Message) -> List[Action]:
+        next_state = SERVER_STATE(name='busy', data=self.state.data + (message.state.data,))
+        return [Action(name='receive_request', next_state=next_state, send_messages=())]
 
 
 class FullServerAgent(PartialServerAgent):
@@ -137,8 +126,8 @@ class FullServerAgent(PartialServerAgent):
     A full server.
     '''
 
-    def _time_when_ready(self, _data: Any) -> Tuple[Action, ...]:
-        return ()
+    def _time_when_ready(self, _message: Message) -> List[Action]:
+        return [Action.NOP]
 
 
 def flags(parser: ArgumentParser) -> None:

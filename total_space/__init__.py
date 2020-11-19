@@ -25,7 +25,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.8'
+__version__ = '0.1.9'
 
 
 __all__ = [
@@ -118,17 +118,16 @@ class State(Immutable):
         return State(name=self.name, data=None)
 
 
-class Message(State):
+class Message(Immutable):
     '''
     A message sent from one :py:const:`Agent` to another (or a time message).
 
     This has the same name-vs-data considerations as the agent :py:const:`State` above.
     '''
 
-    __slots__ = ['source_agent_name', 'target_agent_name']
+    __slots__ = ['source_agent_name', 'target_agent_name', 'state']
 
-    def __init__(self, *, source_agent_name: str, name: str, target_agent_name: str, data: Any) -> None:
-        State.__init__(self, name=name, data=data)
+    def __init__(self, *, source_agent_name: str, target_agent_name: str, state: State) -> None:
         with initializing():
             #: The name of the agent that generated the message, or ``time``.
             self.source_agent_name = source_agent_name
@@ -136,20 +135,25 @@ class Message(State):
             #: The name of the agent that will receive the message.
             self.target_agent_name = target_agent_name
 
+            #: The state carried by the message.
+            self.state = state
+
     @staticmethod
     def time(agent: 'Agent') -> 'Message':
         '''
         We shoehorn the time-passes event to look like a message whose source is the agent state name,
         whose name is ``time``, and whose data is empty (``None``).
         '''
-        return Message(source_agent_name='@ %s' % agent.state.name, name='time', target_agent_name=agent.name, data=None)
+        return Message(source_agent_name='@ %s' % agent.state.name, target_agent_name=agent.name, state=State(name='time'))
 
     def __str__(self) -> str:
-        return '%s -> %s -> %s' % (self.source_agent_name, State.__str__(self), self.target_agent_name)
+        return '%s -> %s -> %s' % (self.source_agent_name, self.state, self.target_agent_name)
 
     def validate(self) -> 'Collection[str]':  # pylint: disable=no-self-use
         '''
-        Return a hopefully empty collection of reasons the state is invalid.
+        Return a hopefully empty collection of reasons the message is invalid.
+
+        This is only invoked if the state is valid as of itself.
         '''
         return ()
 
@@ -159,8 +163,7 @@ class Message(State):
         '''
         return Message(source_agent_name=self.source_agent_name,
                        target_agent_name=self.target_agent_name,
-                       name=self.name,
-                       data=None)
+                       state=State(name=self.state.name))
 
 
 class Action(Immutable):
@@ -169,6 +172,9 @@ class Action(Immutable):
     '''
 
     __slots__ = ['name', 'next_state', 'send_messages']
+
+    #: An action that does not change the state or send any messages.
+    NOP = None  # type: Action
 
     def __init__(self, *, name: str, next_state: Optional[State] = None, send_messages: 'Collection[Message]' = ()) -> None:
         with initializing():
@@ -182,6 +188,8 @@ class Action(Immutable):
             #: We assume the communication fabric may reorder messages.
             #: That is, there's no guarantee at what order the sent messages will be received by their targets.
             self.send_messages = tuple(send_messages)
+
+Action.NOP = Action(name='nop')
 
 
 class Agent(Immutable):
@@ -214,6 +222,14 @@ class Agent(Immutable):
         '''
         return self.__class__(name=self.name, state=state)
 
+    def validate(self) -> 'Collection[str]':  # pylint: disable=no-self-use
+        '''
+        Return a hopefully empty collection of reasons the agent is invalid.
+
+        This is only invoked if the state is valid as of itself.
+        '''
+        return ()
+
     def __str__(self) -> str:
         name = '%s @ %s' % (self.name, self.state.name)
         if self.state.data not in [None, (), [], '']:
@@ -225,6 +241,13 @@ class Agent(Immutable):
         Remove the data for a simplified view of the message.
         '''
         return Agent(name=self.name, state=self.state.only_names())
+
+    @staticmethod
+    def no_action() -> Action:
+        '''
+        Return an action that doesn't do anything (keeps the state and sends no messages).
+        '''
+        return Action(name='nop')
 
 
 class Invalid(Immutable):
@@ -467,8 +490,8 @@ class System(Immutable):
         for transition in transitions:
             file.write('%s\t' % transition.from_configuration_name)
             file.write('%s\t' % transition.delivered_message.source_agent_name)
-            file.write('%s\t' % transition.delivered_message.name)
-            file.write('%s\t' % transition.delivered_message.data)
+            file.write('%s\t' % transition.delivered_message.state.name)
+            file.write('%s\t' % transition.delivered_message.state.data)
             file.write('%s\t' % transition.delivered_message.target_agent_name)
             file.write('%s\n' % transition.to_configuration_name)
 
@@ -650,7 +673,7 @@ class System(Immutable):
             delivered_message = transition.delivered_message  # type: Optional[Message]
 
             shown_source = delivered_message.source_agent_name in agent_names
-            known_source = delivered_message.name == 'time' or shown_source
+            known_source = delivered_message.state.name == 'time' or shown_source
             known_target = delivered_message.target_agent_name in agent_names
 
             if not known_source and not known_target:
@@ -818,7 +841,7 @@ def message_space_label(message: Message) -> str:
     '''
     The label to show for a message.
     '''
-    return '%s &rarr; | %s | &rarr; %s' % (message.source_agent_name, State.__str__(message), message.target_agent_name)
+    return '%s &rarr; | %s | &rarr; %s' % (message.source_agent_name, message.state, message.target_agent_name)
 
 
 def message_times(  # pylint: disable=too-many-locals
@@ -892,7 +915,7 @@ def print_message_time_nodes(file: 'TextIO', message_id: int, message: Message, 
             file.write('"%s" -> "%s" [ penwidth=3, color=mediumblue, weight=1000, dir=forward, arrowhead=none ];\n'
                        % (prev_node, node))
         else:
-            file.write('"%s" [ label="%s", shape=box, style=filled, color=turquoise ];\n' % (node, State.__str__(message)))
+            file.write('"%s" [ label="%s", shape=box, style=filled, color=turquoise ];\n' % (node, message.state))
 
     head_node = ''
     for time in range(0, first_time + 1):
@@ -958,7 +981,7 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
             for message in to_configuration.messages_in_flight:
                 if message not in configuration.messages_in_flight and message.source_agent_name == agent_name:
                     message_id = message_id_by_times[(to_time_counter, str(message))]
-                    last_message_name = message.name
+                    last_message_name = message.state.name
                     last_message_node = 'message-%s-%s' % (message_id, to_time_counter)
                     file.write('"%s":c -> "%s":c [ penwidth=3, color=mediumblue, constraint=false ];\n'
                                % (mid_node, last_message_node))
@@ -966,7 +989,7 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
 
         message = transition.delivered_message
         if message.target_agent_name == agent_name:
-            if message.name == 'time':
+            if message.state.name == 'time':
                 message_node = print_time_message_node(file, message, time_counter)
             else:
                 message_id = message_id_by_times[(time_counter, str(message))]
@@ -1079,12 +1102,16 @@ class Model:
         '''
         agent_index = self.agent_indices[message.target_agent_name]
         agent = configuration.agents[agent_index]
-        handler = getattr(agent, '_%s_when_%s' % (message.name, agent.state.name), None)
+        handler = getattr(agent, '_%s_when_%s' % (message.state.name, agent.state.name), None)
 
-        if handler is None:
+        actions = []  # type: List[Action]
+        if handler is not None:
+            actions = handler(message)
+
+        if len(actions) == 0:
             self.missing_handler(configuration, agent, message, message_index)
         else:
-            for action in handler(message.data):
+            for action in actions:
                 self.perform_action(configuration, agent, agent_index, action, message, message_index)
 
     def perform_action(  # pylint: disable=too-many-arguments
@@ -1104,12 +1131,17 @@ class Model:
             invalids = []  # type: List[Invalid]
         else:
             new_agent = agent.with_state(action.next_state)
-            invalids = [Invalid(kind='agent', name=agent.name, reason=reason)
-                        for reason in action.next_state.validate()]
+            reasons = new_agent.state.validate()
+            if len(reasons) == 0:
+                reasons = new_agent.validate()
+            invalids = [Invalid(kind='agent', name=agent.name, reason=reason) for reason in reasons]
 
         for sent_message in action.send_messages:
-            for reason in sent_message.validate():
-                invalids.append(Invalid(kind='message', name=sent_message.name, reason=reason))
+            reasons = sent_message.state.validate()
+            if len(reasons) == 0:
+                reasons = sent_message.validate()
+            for reason in reasons:
+                invalids.append(Invalid(kind='message', name=sent_message.state.name, reason=reason))
 
         self.new_transition(configuration, new_agent, agent_index, message, message_index, invalids, action.send_messages)
 
@@ -1124,7 +1156,7 @@ class Model:
         Report a missing message handler for an agent at some state.
         '''
         invalid = Invalid(kind='agent', name=agent.name,
-                           reason='missing handler for message: %s when in state: %s' % (message.name, agent.state.name))
+                           reason='missing handler for message: %s when in state: %s' % (message.state, agent.state))
 
         self.new_transition(configuration, None, None, message, message_index, [invalid])
 
@@ -1158,6 +1190,9 @@ class Model:
         to_configuration = self.validated_configuration(Configuration(agents=new_agents,
                                                                       messages_in_flight=new_messages_in_flight,
                                                                       invalids=tuple(sorted(invalids))))
+
+        if from_configuration == to_configuration:
+            return
 
         transition = Transition(from_configuration_name=from_configuration.name,
                                 delivered_message=message,
