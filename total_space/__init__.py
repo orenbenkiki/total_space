@@ -25,7 +25,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.10'
+__version__ = '0.1.11'
 
 
 __all__ = [
@@ -822,10 +822,7 @@ def print_space_node(file: 'TextIO', configuration: Configuration, node_names: S
         label = configuration.name.replace(' , ', '\n').replace(' ; ', '\n')
     else:
         color = 'lightcoral'
-        label = '\n'.join([str(invalid) for invalid in configuration.invalids])
-        label = label.replace(' because:', '\nbecause:')
-        label = label.replace(' for message:', '\nfor message:')
-        label = label.replace(' when in state:', '\nwhen in state:')
+        label = '\n\n'.join([invalid_label(invalid) for invalid in configuration.invalids])
     file.write('"%s" [ label="%s", shape=box, style=filled, color=%s];\n' % (configuration.name, label, color))
 
 
@@ -845,6 +842,17 @@ def message_space_label(message: Message) -> str:
     The label to show for a message.
     '''
     return '%s &rarr; | %s | &rarr; %s' % (message.source_agent_name, message.state, message.target_agent_name)
+
+
+def invalid_label(invalid: Invalid) -> str:
+    '''
+    The label to show for an invalid notification.
+    '''
+    label = str(invalid)
+    label = label.replace(' because:', '\nbecause:')
+    label = label.replace(' for message:', '\nfor message:')
+    label = label.replace(' when in state:', '\nwhen in state:')
+    return label
 
 
 def message_times(  # pylint: disable=too-many-locals
@@ -918,7 +926,7 @@ def print_message_time_nodes(file: 'TextIO', message_id: int, message: Message, 
             file.write('"%s" -> "%s" [ penwidth=3, color=mediumblue, weight=1000, dir=forward, arrowhead=none ];\n'
                        % (prev_node, node))
         else:
-            file.write('"%s" [ label="%s", shape=box, style=filled, color=paleturquoise, color=paleturquoise ];\n' % (node, message.state))
+            file.write('"%s" [ label="%s", shape=box, style=filled, color=paleturquoise ];\n' % (node, message.state))
 
     head_node = ''
     for time in range(0, first_time + 1):
@@ -936,11 +944,11 @@ def print_invalid_time_node(file: 'TextIO', invalid: Invalid) -> str:
     '''
     node = str(invalid)
     file.write('"%s" [ label="%s", shape=box, style=filled, color=lightcoral ];\n'
-               % (node, node.replace('because: ', 'because:\n')))
+               % (node, invalid_label(invalid)))
     return node
 
 
-def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-arguments
+def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-arguments,too-many-statements
     file: 'TextIO',
     transitions: List[Transition],
     configuration_by_name: Dict[str, Configuration],
@@ -972,7 +980,7 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
     file.write('"%s" -> "%s" [ penwidth=3, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
                % (mid_node, last_agent_node, color))
 
-    for (transition_index, transition) in enumerate(transitions):
+    for transition in transitions:
         mid_time_counter = time_counter + 1
         to_time_counter = time_counter + 2
         to_configuration = configuration_by_name[transition.to_configuration_name]
