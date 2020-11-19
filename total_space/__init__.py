@@ -25,7 +25,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.9'
+__version__ = '0.1.10'
 
 
 __all__ = [
@@ -733,7 +733,7 @@ class System(Immutable):
             if to_configuration.valid:
                 color = 'darkgreen'
             else:
-                color = 'red'
+                color = 'crimson'
 
             if len(edges) == 0:
                 continue
@@ -796,9 +796,9 @@ class System(Immutable):
 
             for invalid in final_configuration.invalids:
                 if invalid.kind == 'agent' and invalid.name == agent.name:
-                    file.write('"%s" -> "%s" [ penwidth=3, color=red, weight=1000 ];\n' % (last_agent_node, str(invalid)))
+                    file.write('"%s" -> "%s" [ penwidth=3, color=crimson, weight=1000 ];\n' % (last_agent_node, str(invalid)))
                 elif invalid.kind == 'message' and invalid.name == last_message_name:
-                    file.write('"%s" -> "%s" [ penwidth=3, color=red, weight=1000 ];\n' % (last_message_node, str(invalid)))
+                    file.write('"%s" -> "%s" [ penwidth=3, color=crimson, weight=1000 ];\n' % (last_message_node, str(invalid)))
                 else:
                     file.write('"%s" -> "%s" [ style=invis ];\n' % (last_agent_node, str(invalid)))
 
@@ -818,12 +818,15 @@ def print_space_node(file: 'TextIO', configuration: Configuration, node_names: S
     node_names.add(configuration.name)
 
     if configuration.valid:
-        color = 'aquamarine'
+        color = 'palegreen'
         label = configuration.name.replace(' , ', '\n').replace(' ; ', '\n')
     else:
         color = 'lightcoral'
-        label = '\n'.join([str(invalid) for invalid in configuration.invalids]).replace('because: ', 'because:\n')
-    file.write('"%s" [ label="%s", shape=box, style=filled, fillcolor=%s ];\n' % (configuration.name, label, color))
+        label = '\n'.join([str(invalid) for invalid in configuration.invalids])
+        label = label.replace(' because:', '\nbecause:')
+        label = label.replace(' for message:', '\nfor message:')
+        label = label.replace(' when in state:', '\nwhen in state:')
+    file.write('"%s" [ label="%s", shape=box, style=filled, color=%s];\n' % (configuration.name, label, color))
 
 
 def print_space_message(file: 'TextIO', message: Message, message_nodes: Set[str]) -> None:
@@ -834,7 +837,7 @@ def print_space_message(file: 'TextIO', message: Message, message_nodes: Set[str
     if label in message_nodes:
         return
     message_nodes.add(label)
-    file.write('"%s" [ label="{%s}", shape=record, style=filled, fillcolor=turquoise ];\n' % (label, label))
+    file.write('"%s" [ label="{%s}", shape=record, style=filled, color=paleturquoise ];\n' % (label, label))
 
 
 def message_space_label(message: Message) -> str:
@@ -856,7 +859,7 @@ def message_times(  # pylint: disable=too-many-locals
     message_lifetime_by_id = {}  # type: Dict[int, Tuple[Message, int, int]]
     active_messages = {}  # type: Dict[str, Tuple[Message, int, int]]
 
-    time_counter = 0
+    time_counter = 1
     configuration = configuration_by_name[transitions[0].from_configuration_name]
 
     for message in configuration.messages_in_flight:
@@ -915,7 +918,7 @@ def print_message_time_nodes(file: 'TextIO', message_id: int, message: Message, 
             file.write('"%s" -> "%s" [ penwidth=3, color=mediumblue, weight=1000, dir=forward, arrowhead=none ];\n'
                        % (prev_node, node))
         else:
-            file.write('"%s" [ label="%s", shape=box, style=filled, color=turquoise ];\n' % (node, message.state))
+            file.write('"%s" [ label="%s", shape=box, style=filled, color=paleturquoise, color=paleturquoise ];\n' % (node, message.state))
 
     head_node = ''
     for time in range(0, first_time + 1):
@@ -932,7 +935,7 @@ def print_invalid_time_node(file: 'TextIO', invalid: Invalid) -> str:
     Print a node for a final invalid state message.
     '''
     node = str(invalid)
-    file.write('"%s" [ label="%s", shape=box, style=filled, fillcolor=lightcoral ];\n'
+    file.write('"%s" [ label="%s", shape=box, style=filled, color=lightcoral ];\n'
                % (node, node.replace('because: ', 'because:\n')))
     return node
 
@@ -954,13 +957,20 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
     file.write('fontsize = 24;\n')
     file.write('label = "%s";\n' % agent_name)
 
-    time_counter = 0
+    color = 'darkgreen'
     configuration = configuration_by_name[transitions[0].from_configuration_name]
     agent = configuration.agents[agent_index]
 
-    last_agent_node = print_agent_state_node(file, time_counter, agent, print_state=True)
+    time_counter = 0
+    mid_node = print_agent_state_node(file, time_counter, agent, color)
+
     last_message_node = None  # type: Optional[str]
     last_message_name = None  # type: Optional[str]
+
+    time_counter += 1
+    last_agent_node = print_agent_state_node(file, time_counter, agent, color, new_state=True)
+    file.write('"%s" -> "%s" [ penwidth=3, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
+               % (mid_node, last_agent_node, color))
 
     for (transition_index, transition) in enumerate(transitions):
         mid_time_counter = time_counter + 1
@@ -969,11 +979,6 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
         to_agent = to_configuration.agents[agent_index]
 
         mid_node = '%s@%s' % (agent_name, mid_time_counter)
-        agent_node = print_agent_state_node(file, to_time_counter, to_agent,
-                                            print_state=transition_index == len(transitions) - 1 or agent.state != to_agent.state)
-        file.write('"%s" -> "%s" -> "%s" [ penwidth=3, color=darkgreen, weight=1000, dir=forward, arrowhead=none ];\n'
-                   % (last_agent_node, mid_node, agent_node))
-        last_agent_node = agent_node
 
         did_message = False
         if len(to_configuration.messages_in_flight) > len(configuration.messages_in_flight):
@@ -1002,11 +1007,30 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
                        % (message_node, mid_node, arrowhead))
             did_message = True
 
-        print_agent_state_node(file, mid_time_counter, to_agent, did_message=did_message)
+        print_agent_state_node(file, mid_time_counter, to_agent, color, did_message=did_message)
+        new_state = agent.state != to_agent.state
+        agent_node = print_agent_state_node(file, to_time_counter, to_agent, color, new_state=new_state)
+        file.write('"%s" -> "%s" [ penwidth=3, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
+                   % (last_agent_node, mid_node, color))
+        if agent.state != to_agent.state:
+            if color == 'darkgreen':
+                color = 'yellowgreen'
+            else:
+                color = 'darkgreen'
+        file.write('"%s" -> "%s" [ penwidth=3, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
+                   % (mid_node, agent_node, color))
+
+        last_agent_node = agent_node
 
         time_counter = to_time_counter
         configuration = to_configuration
         agent = to_agent
+
+    mid_time_counter = time_counter + 1
+    mid_node = print_agent_state_node(file, mid_time_counter, agent, color)
+    file.write('"%s" -> "%s" [ penwidth=3, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
+               % (last_agent_node, mid_node, color))
+    last_agent_node = mid_node
 
     return last_agent_node, last_message_name, last_message_node
 
@@ -1016,7 +1040,7 @@ def print_time_message_node(file: 'TextIO', message: Message, time_counter: int)
     Print a node for a time message that triggered a transition.
     '''
     node = '%s-time-%s' % (message.target_agent_name, time_counter)
-    file.write('"%s" [ label="time", shape=box, style=filled, color=turquoise ];\n' % node)
+    file.write('"%s" [ label="time", shape=box, style=filled, color=paleturquoise ];\n' % node)
     return node
 
 
@@ -1024,23 +1048,23 @@ def print_agent_state_node(
     file: 'TextIO',
     time_counter: int,
     agent: Agent,
+    color: str,
     *,
-    print_state: bool = False,
+    new_state: bool = False,
     did_message: bool = False
 ) -> str:
     '''
     Print a node along an agent's timeline.
     '''
     node = '%s@%s' % (agent.name, time_counter)
-    if print_state:
-        file.write('"%s" [ shape=box, label="%s", style=filled, color=aquamarine ];\n' % (node, agent.state))
+    if new_state:
+        file.write('"%s" [ shape=box, label="%s", style=filled, color=palegreen ];\n' % (node, agent.state))
     else:
         if did_message:
             penwidth = 4
             color = '"#0063cd"'
         else:
             penwidth = 2
-            color = 'darkgreen'
         file.write('"%s" [ shape=box, label="", penwidth=%s, width=0, height=0, color=%s ];\n' % (node, penwidth, color))
     return node
 
