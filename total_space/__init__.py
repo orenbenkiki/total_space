@@ -10,6 +10,7 @@ Investigate the total state space of communicating state machines.
 # pylint: disable=no-member
 # pylint: disable=no-name-in-module
 # pylint: disable=pointless-statement
+# pylint: disable=protected-access
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-lines
 # pylint: disable=unused-wildcard-import
@@ -25,16 +26,19 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.11'
+__version__ = '0.1.12'
 
 
 __all__ = [
+    'Immutable',
+    'initializing',
     'State',
     'Message',
     'Action',
     'Agent',
     'Invalid',
     'Configuration',
+    'Validation',
     'Transition',
     'System',
     'main',
@@ -50,10 +54,10 @@ class Immutable:
     '''
 
     #: Allow modification of properties when initializing the object.
-    is_initializing = False
+    _is_initializing = False
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if Immutable.is_initializing:
+        if Immutable._is_initializing:
             object.__setattr__(self, name, value)
         else:
             raise RuntimeError('trying to modify the property: %s of an immutable: %s'
@@ -72,11 +76,11 @@ def initializing() -> Iterator[None]:
     Allow mutating :py:const:`Immutable` data during initialization.
     '''
     try:
-        was_initalizing = Immutable.is_initializing
-        Immutable.is_initializing = True
+        was_initalizing = Immutable._is_initializing
+        Immutable._is_initializing = True
         yield
     finally:
-        Immutable.is_initializing = was_initalizing
+        Immutable._is_initializing = was_initalizing
 
 
 class State(Immutable):
@@ -372,8 +376,8 @@ class Transition(Immutable):
 
 
 #: The type of a function that validates a :py:const:`Configuration`,
-#: returning a hopefully empty collection of :py:const:`Invalid` indications.
-Validation = Callable[[Configuration], 'Collection[Invalid]']
+#: returning a hopefully empty collection of reasons it is invalid.
+Validation = Callable[[Configuration], 'Collection[str]']
 
 class System(Immutable):
     '''
@@ -1246,9 +1250,11 @@ class Model:
         if self.validate is None:
             return configuration
 
-        invalids = self.validate(configuration)
-        if len(invalids) == 0:
+        reasons = self.validate(configuration)
+        if len(reasons) == 0:
             return configuration
+
+        invalids = [Invalid(kind='configuration', reason=reason) for reason in reasons]
 
         return Configuration(agents=configuration.agents, messages_in_flight=configuration.messages_in_flight, invalids=invalids)
 
