@@ -26,7 +26,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.12'
+__version__ = '0.1.13'
 
 
 __all__ = [
@@ -475,7 +475,7 @@ class System(Immutable):
         for configuration in self.configurations:
             file.write('%s\n' % configuration.name)
 
-    def print_transitions(self, file: 'TextIO', path: List[str]) -> None:
+    def print_transitions(self, file: 'TextIO', path: List[str], sent_messages: bool) -> None:
         '''
         Print a list of all the transitions between system configurations to a tab-separated file.
         '''
@@ -484,20 +484,41 @@ class System(Immutable):
         else:
             transitions = self.transitions
 
+        configuration_by_name = {configuration.name: configuration for configuration in self.configurations}
+
         file.write('from_configuration_name\t')
         file.write('delivered_message_source_agent_name\t')
         file.write('delivered_message_name\t')
         file.write('delivered_message_data\t')
         file.write('delivered_message_target_agent_name\t')
+        if sent_messages:
+            file.write('sent_messages\t')
         file.write('to_configuration_name\n')
 
         for transition in transitions:
-            file.write('%s\t' % transition.from_configuration_name)
+            from_configuration_name = transition.from_configuration_name
+            to_configuration_name = transition.to_configuration_name
+            if sent_messages:
+                from_configuration = configuration_by_name[from_configuration_name]
+                to_configuration = configuration_by_name[to_configuration_name]
+                from_configuration_name = from_configuration.only_agents().name
+                to_configuration_name = to_configuration.only_agents().name
+
+            file.write('%s\t' % from_configuration_name)
             file.write('%s\t' % transition.delivered_message.source_agent_name)
             file.write('%s\t' % transition.delivered_message.state.name)
             file.write('%s\t' % transition.delivered_message.state.data)
             file.write('%s\t' % transition.delivered_message.target_agent_name)
-            file.write('%s\n' % transition.to_configuration_name)
+
+            if sent_messages:
+                messages = new_messages(from_configuration, to_configuration)
+                if len(messages) > 0:
+                    file.write(' , '.join([str(message) for message in messages]))
+                    file.write('\t')
+                else:
+                    file.write('None\t')
+
+            file.write('%s\n' % to_configuration_name)
 
     def transitions_path(self, paths: List[str]) -> List[Transition]:
         '''
@@ -690,10 +711,8 @@ class System(Immutable):
             if separate_messages:
                 if len(to_configuration.messages_in_flight) > len(from_configuration.messages_in_flight):
                     assert len(to_configuration.messages_in_flight) == len(from_configuration.messages_in_flight) + 1
-                    for message in to_configuration.messages_in_flight:
-                        if message not in from_configuration.messages_in_flight \
-                                and (message.source_agent_name in agent_names
-                                     or message.target_agent_name in agent_names):
+                    for message in new_messages(from_configuration, to_configuration):
+                        if (message.source_agent_name in agent_names or message.target_agent_name in agent_names):
                             sent_message = message
                             break
 
@@ -811,6 +830,15 @@ class System(Immutable):
                 print_message_time_nodes(file, message_id, message, first_time, last_time)
 
         file.write('}\n')
+
+
+def new_messages(from_configuration: Configuration, to_configuration: Configuration) -> List[Message]:
+    '''
+    Return all the messages that exist in one configuration but not the other.
+    '''
+    return [message
+            for message in to_configuration.messages_in_flight
+            if message not in from_configuration.messages_in_flight]
 
 
 def print_space_node(file: 'TextIO', configuration: Configuration, node_names: Set[str]) -> None:
@@ -995,8 +1023,8 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
         did_message = False
         if len(to_configuration.messages_in_flight) > len(configuration.messages_in_flight):
             assert len(to_configuration.messages_in_flight) == len(configuration.messages_in_flight) + 1
-            for message in to_configuration.messages_in_flight:
-                if message not in configuration.messages_in_flight and message.source_agent_name == agent_name:
+            for message in new_messages(configuration, to_configuration):
+                if message.source_agent_name == agent_name:
                     message_id = message_id_by_times[(to_time_counter, str(message))]
                     last_message_name = message.state.name
                     last_message_node = 'message-%s-%s' % (message_id, to_time_counter)
@@ -1325,6 +1353,8 @@ def main(
         point for the path.
     ''')
     transitions_parser.set_defaults(function=transitions_command)
+    transitions_parser.add_argument('-m', '--messages', action='store_true',
+                                    help='Do not show messages in configurations, and add a column for sent messages.')
     transitions_parser.add_argument('-c', '--configuration', metavar='PATTERN', action='append', default=[],
                                     help='Generate only a path going through a configuration matching the regexp pattern.')
 
@@ -1380,7 +1410,7 @@ def transitions_command(args: Namespace, file: 'TextIO', system: System) -> None
     '''
     if len(args.configuration) == 1:
         raise ValueError('configurations path must contain at least two patterns')
-    system.print_transitions(file, args.configuration)
+    system.print_transitions(file, args.configuration, args.messages)
 
 
 def space_command(args: Namespace, file: 'TextIO', system: System) -> None:
