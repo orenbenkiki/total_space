@@ -2,25 +2,23 @@
 Run test cases and compare actual results files with expected result files.
 '''
 
+# pylint: disable=wildcard-import
+# pylint: disable=unused-wildcard-import
+
 from typing import *
 
+import filecmp
+import glob
 import os
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
-
-import glob
-import filecmp
-import pytest
+# pylint: disable=wrong-import-position
 import total_space
 import total_space.simple_model as simple_model
-
-
-def pytest_assertrepr_compare(op: str, left: Any, right: Any) -> List[str]:
-    '''
-    Report a nice error when the assertion fails.
-    '''
 
 
 @pytest.mark.parametrize('case', [name[6:-5] for name in glob.glob('tests/*.case')])
@@ -35,4 +33,5 @@ def test_case(case: str) -> None:
     if result:
         assert result  # Count successful test assertions
     else:
-        pytest.fail('The file: tests/%s.actual is different from the file: tests/%s.expected' % (case, case), False)
+        pytest.fail('The file: tests/%s.actual is different from the file: tests/%s.expected'
+                    % (case, case), False)

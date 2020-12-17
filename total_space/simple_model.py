@@ -56,9 +56,9 @@ class InvalidServerState(State):
     A server state that reports invalid errors, for tests.
     '''
 
-    def validate(self) -> 'Collection[str]':
-        if len(self.data) == 2:
-            return ['hold two requests']
+    def validate(self) -> Collection[str]:
+        if self.data == 'client-1':
+            return ['client-1 is banned']
         return ()
 
 
@@ -75,11 +75,11 @@ class InvalidServerState(State):
 #: in the data field.
 #:
 #: However using clear state names makes it easier to understand the state machine logic.
-SERVER_READY_STATE = State(name='ready', data=())
+SERVER_READY_STATE = State(name='ready', data=None)
 
 
 #: Class to use for server states.
-SERVER_STATE = State  # type: Type[State]
+SERVER_STATE: Type[State] = State
 
 
 class PartialServerAgent(Agent):
@@ -97,28 +97,20 @@ class PartialServerAgent(Agent):
         return cls(name=name, state=SERVER_READY_STATE)
 
     def _time_when_busy(self, _message: Message) -> List[Action]:
-        assert len(self.state.data) > 0
-        done_client_name = self.state.data[0]
-        remaining_client_names = self.state.data[1:]
+        assert isinstance(self.state.data, str)
+        done_client_name = self.state.data
         response = Message(source_agent_name=self.name,
                            target_agent_name=done_client_name,
                            state=State(name='response', data=done_client_name))
 
-        if len(remaining_client_names) == 0:
-            return [Action(name='done', next_state=SERVER_READY_STATE, send_messages=(response,))]
-        else:
-            next_state = SERVER_STATE(name='busy', data=remaining_client_names)
-            return [Action(name='next', next_state=next_state, send_messages=(response,))]
+        return [Action(name='done', next_state=SERVER_READY_STATE, send_messages=(response,))]
 
     def _request_when_ready(self, message: Message) -> List[Action]:
-        return self._request_when_any(message)
-
-    def _request_when_busy(self, message: Message) -> List[Action]:
-        return self._request_when_any(message)
-
-    def _request_when_any(self, message: Message) -> List[Action]:
-        next_state = SERVER_STATE(name='busy', data=self.state.data + (message.state.data,))
+        next_state = SERVER_STATE(name='busy', data=message.state.data)
         return [Action(name='receive_request', next_state=next_state, send_messages=())]
+
+    def _request_when_busy(self, _message: Message) -> None:
+        return None
 
 
 class FullServerAgent(PartialServerAgent):
@@ -140,7 +132,7 @@ def flags(parser: ArgumentParser) -> None:
     group.add_argument('-c', '--clients', metavar='NUMBER', type=int, default=2, help='The number of clients.')
 
 
-def model(args: Namespace) -> 'Collection[Agent]':
+def model(args: Namespace) -> List[Agent]:
     '''
     Create a model given the command line flags.
     '''

@@ -1,6 +1,6 @@
 #!/bin/sh
 rm -rf images/*
-export PYTHON3=python3.5
+export PYTHON3=python
 export PYTHONPATH=.:$PYTHONPATH
 set -x
 

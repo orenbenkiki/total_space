@@ -2,7 +2,7 @@
 Investigate the total state space of communicating state machines.
 '''
 
-# pylint: disable=C0330
+# pylint_ disable=C0330
 # pylint: disable=inherit-non-class
 # pylint: disable=len-as-condition
 # pylint: disable=line-too-long
@@ -13,6 +13,7 @@ Investigate the total state space of communicating state machines.
 # pylint: disable=protected-access
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-lines
+# pylint: disable=unsubscriptable-object
 # pylint: disable=unused-wildcard-import
 # pylint: disable=wildcard-import
 
@@ -26,7 +27,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.1.13'
+__version__ = '0.2.0'
 
 
 __all__ = [
@@ -104,7 +105,7 @@ class State(Immutable):
             #: The state's actual data.
             self.data = data
 
-    def validate(self) -> 'Collection[str]':  # pylint: disable=no-self-use
+    def validate(self) -> Collection[str]:  # pylint: disable=no-self-use
         '''
         Return a hopefully empty collection of reasons the state is invalid.
         '''
@@ -153,7 +154,7 @@ class Message(Immutable):
     def __str__(self) -> str:
         return '%s -> %s -> %s' % (self.source_agent_name, self.state, self.target_agent_name)
 
-    def validate(self) -> 'Collection[str]':  # pylint: disable=no-self-use
+    def validate(self) -> Collection[str]:  # pylint: disable=no-self-use
         '''
         Return a hopefully empty collection of reasons the message is invalid.
 
@@ -178,9 +179,9 @@ class Action(Immutable):
     __slots__ = ['name', 'next_state', 'send_messages']
 
     #: An action that does not change the state or send any messages.
-    NOP = None  # type: Action
+    NOP: 'Action'
 
-    def __init__(self, *, name: str, next_state: Optional[State] = None, send_messages: 'Collection[Message]' = ()) -> None:
+    def __init__(self, *, name: str, next_state: Optional[State] = None, send_messages: Collection[Message] = ()) -> None:
         with initializing():
             #: The name of the action for visualization.
             self.name = name
@@ -207,7 +208,14 @@ class Agent(Immutable):
     and receives a :py:const:`Message` with the name ``message_name``.
 
     Each method takes the data of the message,
-    returns a tuple of alternative :py:const:`Action` possibilities.
+    returns a list of alternative :py:const:`Action` possibilities.
+
+    If the method returns ``None``, then this indicates that the message can't be received
+    when the agent is in the current state, but that the agent will be able to receive
+    the message later when it transitions to another state (either because time has
+    passed, or because another message was received). This is similar to the agent
+    placing the message in a queue and serving it later, except that there's no
+    guarantee on the order of serving the messages.
     '''
 
     __slots__ = ['name', 'state']
@@ -226,7 +234,7 @@ class Agent(Immutable):
         '''
         return self.__class__(name=self.name, state=state)
 
-    def validate(self) -> 'Collection[str]':  # pylint: disable=no-self-use
+    def validate(self) -> Collection[str]:  # pylint: disable=no-self-use
         '''
         Return a hopefully empty collection of reasons the agent is invalid.
 
@@ -291,9 +299,9 @@ class Configuration(Immutable):
     def __init__(
         self,
         *,
-        agents: 'Collection[Agent]',
-        messages_in_flight: 'Collection[Message]' = (),
-        invalids: 'Collection[Invalid]' = ()
+        agents: Collection[Agent],
+        messages_in_flight: Collection[Message] = (),
+        invalids: Collection[Invalid] = ()
     ) -> None:
         with initializing():
             #: All the agents with their state.
@@ -326,7 +334,7 @@ class Configuration(Immutable):
         '''
         return len(self.invalids) == 0
 
-    def focus_on_agents(self, agent_indices: 'Collection[int]') -> 'Configuration':
+    def focus_on_agents(self, agent_indices: Collection[int]) -> 'Configuration':
         '''
         Return a simplified configuration focusing only on some of the agents.
         '''
@@ -377,7 +385,7 @@ class Transition(Immutable):
 
 #: The type of a function that validates a :py:const:`Configuration`,
 #: returning a hopefully empty collection of reasons it is invalid.
-Validation = Callable[[Configuration], 'Collection[str]']
+Validation = Callable[[Configuration], Collection[str]]
 
 class System(Immutable):
     '''
@@ -402,7 +410,7 @@ class System(Immutable):
     @staticmethod
     def compute(
         *,
-        agents: 'Collection[Agent]',
+        agents: Collection[Agent],
         validate: Optional[Validation] = None
     ) -> 'System':
         '''
@@ -412,7 +420,7 @@ class System(Immutable):
         return System(configurations=tuple(sorted(model.configurations.values())),
                       transitions=tuple(sorted(model.transitions)))
 
-    def focus_on_agents(self, keep_agents: 'Collection[str]') -> 'System':
+    def focus_on_agents(self, keep_agents: Collection[str]) -> 'System':
         '''
         Return a simplified view of the system which focuses a subset of the agents.
         '''
@@ -443,16 +451,16 @@ class System(Immutable):
         '''
         Return a simplified view of the system.
         '''
-        new_configuration_by_name = {}  # type: Dict[str, Configuration]
-        new_name_by_old_name = {}  # type: Dict[str, str]
+        new_configuration_by_name: Dict[str, Configuration] = {}
+        new_name_by_old_name: Dict[str, str] = {}
 
         for configuration in self.configurations:
             new_configuration = simplify_configuration(configuration)
             new_configuration_by_name[new_configuration.name] = new_configuration
             new_name_by_old_name[configuration.name] = new_configuration.name
 
-        new_transitions = {}  # type: Dict[str, Transition]
-        reachable_configuration_names = set()  # type: Set[str]
+        new_transitions: Dict[str, Transition] = {}
+        reachable_configuration_names: Set[str] = set()
         for transition in self.transitions:
             new_from_configuration_name = new_name_by_old_name[transition.from_configuration_name]
             new_to_configuration_name = new_name_by_old_name[transition.to_configuration_name]
@@ -480,7 +488,7 @@ class System(Immutable):
         Print a list of all the transitions between system configurations to a tab-separated file.
         '''
         if len(path) > 0:
-            transitions = self.transitions_path(path)  # type: Collection[Transition]
+            transitions: Collection[Transition] = self.transitions_path(path)
         else:
             transitions = self.transitions
 
@@ -532,14 +540,14 @@ class System(Immutable):
 
         configuration_name = initial_configuration_names[0]
 
-        outgoing_transitions = {}  # type: Dict[str, List[Transition]]
+        outgoing_transitions: Dict[str, List[Transition]] = {}
         for transition in self.transitions:
             transitions_list = outgoing_transitions.get(transition.from_configuration_name)
             if transitions_list is None:
                 transitions_list = outgoing_transitions[transition.from_configuration_name] = []
             transitions_list.append(transition)
 
-        transitions = []  # type: List[Transition]
+        transitions: List[Transition] = []
         for pattern in paths[1:]:
             self.shortest_path(configuration_name, pattern, outgoing_transitions, transitions)
             configuration_name = transitions[-1].to_configuration_name
@@ -558,9 +566,9 @@ class System(Immutable):
         '''
         to_configuration_names = set(self.matching_configuration_names(to_pattern))
 
-        near_pending = [(from_configuration_name, [])]  # type: List[Tuple[str, List[Transition]]]
-        far_pending = []  # type: List[Tuple[str, List[Transition]]]
-        visited_configuration_names = set()  # type: Set[str]
+        near_pending: List[Tuple[str, List[Transition]]] = [(from_configuration_name, [])]
+        far_pending: List[Tuple[str, List[Transition]]] = []
+        visited_configuration_names: Set[str] = set()
         while len(near_pending) > 0:
             configuration_name, near_transitions = near_pending.pop()
             if configuration_name not in visited_configuration_names:
@@ -588,7 +596,7 @@ class System(Immutable):
         try:
             regexp = re.compile(pattern)
         except BaseException:
-            raise ValueError('invalid regexp pattern: %s' % pattern)
+            raise ValueError('invalid regexp pattern: %s' % pattern)  # pylint: disable=raise-missing-from
 
         configuration_names = [configuration.name for configuration in self.configurations if regexp.search(configuration.name)]
         if len(configuration_names) == 0:
@@ -600,7 +608,7 @@ class System(Immutable):
         self,
         file: 'TextIO',
         *,
-        cluster_by_agents: 'Collection[str]' = (),
+        cluster_by_agents: Collection[str] = (),
         label: str = 'Total Space',
         separate_messages: bool = False,
         merge_messages: bool = False
@@ -616,7 +624,7 @@ class System(Immutable):
         file.write('edge [ fontname = "Sans-Serif" ];\n')
         file.write('label = "%s";\n' % label)
 
-        reachable_configuration_names = set()  # type: Set[str]
+        reachable_configuration_names: Set[str] = set()
         self.print_space_edges(file, reachable_configuration_names,
                                separate_messages=separate_messages, merge_messages=merge_messages)
         self.print_space_nodes(file, cluster_by_agents, reachable_configuration_names, merge_messages)
@@ -626,14 +634,14 @@ class System(Immutable):
     def print_space_nodes(  # pylint: disable=too-many-locals
         self,
         file: 'TextIO',
-        cluster_by_agents: 'Collection[str]',
+        cluster_by_agents: Collection[str],
         reachable_configuration_names: Set[str],
         merge_messages: bool
     ) -> None:
         '''
         Print all the nodes of the ``dot`` file.
         '''
-        node_names = set()  # type: Set[str]
+        node_names: Set[str] = set()
         if merge_messages:
             configurations = tuple([configuration.only_agents() for configuration in self.configurations])
         else:
@@ -652,7 +660,7 @@ class System(Immutable):
                  for configuration in configurations
                  if configuration.name in reachable_configuration_names]
 
-        current_path = []  # type: List[str]
+        current_path: List[str] = []
         for path, configuration in sorted(zip(paths, configurations)):
             remaining_path = current_path + []
             while len(remaining_path) > 0 and len(current_path) > 0 and remaining_path[0] == path[0]:
@@ -690,12 +698,12 @@ class System(Immutable):
         configuration_by_name = {configuration.name: configuration for configuration in self.configurations}
         agent_names = {agent.name for agent in list(configuration_by_name.values())[0].agents}
 
-        message_edges = set()  # type: Set[str]
-        message_nodes = set()  # type: Set[str]
-        intermediate_nodes = set()  # type: Set[str]
+        message_edges: Set[str] = set()
+        message_nodes: Set[str] = set()
+        intermediate_nodes: Set[str] = set()
 
         for transition in self.transitions:
-            delivered_message = transition.delivered_message  # type: Optional[Message]
+            delivered_message: Message = transition.delivered_message
 
             shown_source = delivered_message.source_agent_name in agent_names
             known_source = delivered_message.state.name == 'time' or shown_source
@@ -707,7 +715,7 @@ class System(Immutable):
             from_configuration = configuration_by_name[transition.from_configuration_name]
             to_configuration = configuration_by_name[transition.to_configuration_name]
 
-            sent_message = None  # type: Optional[Message]
+            sent_message: Optional[Message] = None
             if separate_messages:
                 if len(to_configuration.messages_in_flight) > len(from_configuration.messages_in_flight):
                     assert len(to_configuration.messages_in_flight) == len(from_configuration.messages_in_flight) + 1
@@ -732,7 +740,7 @@ class System(Immutable):
                               message_space_label(delivered_message).replace(' | ', '\n')))
                 continue
 
-            edges = []  # type: List[str]
+            edges: List[str] = []
 
             if sent_message is None:
                 intermediate = '%s => %s' % (from_configuration.name, to_configuration.name)
@@ -803,7 +811,7 @@ class System(Immutable):
         for invalid in final_configuration.invalids:
             print_invalid_time_node(file, invalid)
 
-        printed_messages = set()  # type: Set[int]
+        printed_messages: Set[int] = set()
 
         for agent in self.configurations[0].agents:
             last_agent_node, last_message_name, last_message_node = \
@@ -895,9 +903,9 @@ def message_times(  # pylint: disable=too-many-locals
     Return for each time and message the unique message id,
     and for each unique message id the message and the first and last time it existed.
     '''
-    message_id_by_times = {}  # type: Dict[Tuple[int, str], int]
-    message_lifetime_by_id = {}  # type: Dict[int, Tuple[Message, int, int]]
-    active_messages = {}  # type: Dict[str, Tuple[Message, int, int]]
+    message_id_by_times: Dict[Tuple[int, str], int] = {}
+    message_lifetime_by_id: Dict[int, Tuple[Message, int, int]] = {}
+    active_messages: Dict[str, Tuple[Message, int, int]] = {}
 
     time_counter = 1
     configuration = configuration_by_name[transitions[0].from_configuration_name]
@@ -916,7 +924,7 @@ def message_times(  # pylint: disable=too-many-locals
         to_configuration = configuration_by_name[transition.to_configuration_name]
         mid_time_counter = time_counter + 1
         to_time_counter = time_counter + 2
-        to_active_messages = {}  # type: Dict[str, Tuple[Message, int, int]]
+        to_active_messages: Dict[str, Tuple[Message, int, int]] = {}
 
         for message in to_configuration.messages_in_flight:
             message_text = str(message)
@@ -1004,8 +1012,8 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
     time_counter = 0
     mid_node = print_agent_state_node(file, time_counter, agent, color)
 
-    last_message_node = None  # type: Optional[str]
-    last_message_name = None  # type: Optional[str]
+    last_message_node: Optional[str] = None
+    last_message_name: Optional[str] = None
 
     time_counter += 1
     last_agent_node = print_agent_state_node(file, time_counter, agent, color, new_state=True)
@@ -1116,7 +1124,7 @@ class Model:
 
     def __init__(
         self,
-        agents: 'Collection[Agent]',
+        agents: Collection[Agent],
         validate: Optional[Validation] = None
     ) -> None:
         #: How to validate configurations.
@@ -1128,7 +1136,7 @@ class Model:
         self.agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(initial_configuration.agents)}
 
         #: All the transitions between configurations.
-        self.transitions = []  # type: List[Transition]
+        self.transitions: List[Transition] = []
 
         #: All the known configurations, keyed by their name.
         self.configurations = {initial_configuration.name: initial_configuration}
@@ -1168,9 +1176,12 @@ class Model:
         agent = configuration.agents[agent_index]
         handler = getattr(agent, '_%s_when_%s' % (message.state.name, agent.state.name), None)
 
-        actions = []  # type: List[Action]
+        actions: List[Action] = []
         if handler is not None:
             actions = handler(message)
+
+        if actions is None:
+            return
 
         if len(actions) == 0:
             self.missing_handler(configuration, agent, message, message_index)
@@ -1192,7 +1203,7 @@ class Model:
         '''
         if action.next_state is None:
             new_agent = None
-            invalids = []  # type: List[Invalid]
+            invalids: List[Invalid] = []
         else:
             new_agent = agent.with_state(action.next_state)
             reasons = new_agent.state.validate()
@@ -1231,8 +1242,8 @@ class Model:
         agent_index: Optional[int],
         message: Message,
         message_index: Optional[int],
-        invalids: 'Collection[Invalid]',
-        send_messages: 'Collection[Message]' = ()
+        invalids: Collection[Invalid],
+        send_messages: Collection[Message] = ()
     ) -> None:
         '''
         Create a new transition, and, if needed, a new pending configuration.
@@ -1310,7 +1321,7 @@ def tuple_remove(data: Tuple, index: int) -> Tuple:
 def main(
     *,
     flags: Optional[Callable[[ArgumentParser], None]] = None,
-    model: Callable[[Namespace], 'Collection[Agent]'],
+    model: Callable[[Namespace], Collection[Agent]],
     validate: Optional[Validation] = None,
     description: str = 'Investigate the total state space of communicating finite state machines',
     epilog: str = ''
