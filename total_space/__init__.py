@@ -27,7 +27,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 
 __all__ = [
@@ -51,7 +51,8 @@ class Immutable:
     '''
     Prevent any properties from being modified.
 
-    The code here is in a "functional" style and makes heavy use of immutable data.
+    The code here is in a "functional" style and makes heavy use of immutable
+    data.
     '''
 
     #: Allow modification of properties when initializing the object.
@@ -88,11 +89,13 @@ class State(Immutable):
     '''
     A state of an :py:const:`Agent`.
 
-    In general the state of an agent could be "anything" (including "nothing" - None).
-    It "should" be immutable; use named tuples for structures and simple tuples for arrays/lists.
+    In general the state of an agent could be "anything" (including "nothing" -
+    None).  It "should" be immutable; use named tuples for structures and
+    simple tuples for arrays/lists.
 
-    In general one can bury all the information in the data field and use a single state name.
-    However for clarity, the overall space of all possible states is split into named sub-spaces.
+    In general one can bury all the information in the data field and use a
+    single state name.  However for clarity, the overall space of all possible
+    states is split into named sub-spaces.
     '''
 
     __slots__ = ['name', 'data']
@@ -127,7 +130,8 @@ class Message(Immutable):
     '''
     A message sent from one :py:const:`Agent` to another (or a time message).
 
-    This has the same name-vs-data considerations as the agent :py:const:`State` above.
+    This has the same name-vs-data considerations as the agent
+    :py:const:`State` above.
     '''
 
     __slots__ = ['source_agent_name', 'target_agent_name', 'state']
@@ -146,8 +150,9 @@ class Message(Immutable):
     @staticmethod
     def time(agent: 'Agent') -> 'Message':
         '''
-        We shoehorn the time-passes event to look like a message whose source is the agent state name,
-        whose name is ``time``, and whose data is empty (``None``).
+        We shoehorn the time-passes event to look like a message whose source
+        is the agent state name, whose name is ``time``, and whose data is
+        empty (``None``).
         '''
         return Message(source_agent_name='@ %s' % agent.state.name, target_agent_name=agent.name, state=State(name='time'))
 
@@ -173,7 +178,8 @@ class Message(Immutable):
 
 class Action(Immutable):
     '''
-    A possible action taken by an :py:const:`Agent` as a response to receiving a :py:const:`Message`.
+    A possible action taken by an :py:const:`Agent` as a response to receiving
+    a :py:const:`Message`.
     '''
 
     __slots__ = ['name', 'next_state', 'send_messages']
@@ -203,22 +209,64 @@ class Agent(Immutable):
 
     Each agent is a non-deterministic state machine.
 
-    Sub-classes should implement methods with the name ``_<message_name>_when_<state_name>``,
-    which are invoked when the has a :py:const:`State` with ``state_name``,
-    and receives a :py:const:`Message` with the name ``message_name``.
+    Sub-classes should implement methods with the name
+    ``_<message_name>_when_<state_name>``, which are invoked when the has a
+    :py:const:`State` with ``state_name``, and receives a :py:const:`Message`
+    with the name ``message_name``.
 
-    Each method takes the data of the message,
-    returns a list of alternative :py:const:`Action` possibilities.
+    Each such method should have a single parameter for the message, and return
+    either ``None`` or a ``Collection`` of possible :py:const:`Action`, any one
+    of which may be taken when receiving the message while at the current
+    state.  Providing multiple alternatives allows modeling a non-deterministic
+    agent (e.g., modeling either a hit or a miss in a cache).
 
-    If the method returns ``None``, then this indicates that the message can't be received
-    when the agent is in the current state, but that the agent will be able to receive
-    the message later when it transitions to another state (either because time has
-    passed, or because another message was received). This is similar to the agent
-    placing the message in a queue and serving it later, except that there's no
-    guarantee on the order of serving the messages.
+    If the method returns :py:attr:`Agent.IGNORE`, then the agent silently
+    ignores the message without changing its state. This is a convenient
+    shorthand for returning a collection with a single :py:attr:`Action.NOP`
+    action.
+
+    If the method returns :py:attr:`Agent.DEFER`, then this indicates that the
+    message will not be received while the agent is in the current state.
+    Instead the agent will receive the message later, after it transitions to
+    some other state, either because time has passed, or because another
+    message was received.
+
+    It is possible to instead manually include a queue of pending messages
+    inside the agent state, add the message to it, and deal with the message
+    when the agent reaches a suitable state. This however is tedius to
+    implement, and results in an identical model, at least in the common case
+    where the order of serving such messages does not matter.
+
+    It is difficult to automatically ensure that a deferred message will
+    eventually be handled by the agent. This can manifest either due to the
+    agent never reaching some state, which should be detected when examining
+    the state transition graph; or when multiple copies of "similar" messages
+    are created and never delivered.
+
+    Unreachable agent states scenario should be detected when searching for
+    paths between different agent states. Generating "too many" copies of
+    "similar" in-flight messages should be prevented by implementing an
+    appropriate :py:func:`Configuration.invalid` method.
     '''
 
     __slots__ = ['name', 'state']
+
+    #: Return this from a handler to indicate the agent silently ignores the message.
+    IGNORE = (Action.NOP,)
+
+    #: Return this from a handler to indicate the agent defers handling the message
+    #: until it is in a different state.
+    DEFER = ()
+
+    #: Return this from a handler to indicate the agent is not expected to even
+    #: receive some message while in some state, or does not know how to handle
+    #: some message while in some state. If this happens, the model is either
+    #: wrong or partial, a problem will be reported, and the model will need to
+    #: be fixed.
+    UNEXPECTED = None
+
+    #: Return this from a handler to indicate the agent
+
 
     def __init__(self, *, name: str, state: State) -> None:
         with initializing():
@@ -257,7 +305,8 @@ class Agent(Immutable):
     @staticmethod
     def no_action() -> Action:
         '''
-        Return an action that doesn't do anything (keeps the state and sends no messages).
+        Return an action that doesn't do anything (keeps the state and sends no
+        messages).
         '''
         return Action(name='nop')
 
@@ -347,7 +396,8 @@ class Configuration(Immutable):
 
     def only_names(self) -> 'Configuration':
         '''
-        Remove all the data, keeping the names, for a simplified view of the configuration.
+        Remove all the data, keeping the names, for a simplified view of the
+        configuration.
         '''
         agents = tuple(agent.only_names() for agent in self.agents)
         messages_in_flight = tuple(message.only_names() for message in self.messages_in_flight)
@@ -356,7 +406,8 @@ class Configuration(Immutable):
 
     def only_agents(self) -> 'Configuration':
         '''
-        Remove all the in-flight messages, keeping the agents, for a simplified view of the configuration.
+        Remove all the in-flight messages, keeping the agents, for a simplified
+        view of the configuration.
         '''
         return Configuration(agents=self.agents, messages_in_flight=(), invalids=self.invalids)
 
@@ -414,7 +465,8 @@ class System(Immutable):
         validate: Optional[Validation] = None
     ) -> 'System':
         '''
-        Compute the total state space of a system given some agents in their initial state.
+        Compute the total state space of a system given some agents in their
+        initial state.
         '''
         model = Model(agents, validate)
         return System(configurations=tuple(sorted(model.configurations.values())),
@@ -422,7 +474,8 @@ class System(Immutable):
 
     def focus_on_agents(self, keep_agents: Collection[str]) -> 'System':
         '''
-        Return a simplified view of the system which focuses a subset of the agents.
+        Return a simplified view of the system which focuses a subset of the
+        agents.
         '''
         assert len(keep_agents) > 0
         agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(self.configurations[0].agents)}
@@ -433,14 +486,16 @@ class System(Immutable):
 
     def only_names(self) -> 'System':
         '''
-        Strip all the data, keeping only the names, for a simpler view of the system.
+        Strip all the data, keeping only the names, for a simpler view of the
+        system.
         '''
         return self.simplify(lambda configuration: configuration.only_names(),
                              lambda message: message.only_names())
 
     def only_agents(self) -> 'System':
         '''
-        Strip all the in-flight messages, keeping only the agents, for a simpler view of the system.
+        Strip all the in-flight messages, keeping only the agents, for a
+        simpler view of the system.
         '''
         return self.simplify(lambda configuration: configuration.only_agents(),
                              lambda message: message)
@@ -485,7 +540,8 @@ class System(Immutable):
 
     def print_transitions(self, file: 'TextIO', path: List[str], sent_messages: bool) -> None:
         '''
-        Print a list of all the transitions between system configurations to a tab-separated file.
+        Print a list of all the transitions between system configurations to a
+        tab-separated file.
         '''
         if len(path) > 0:
             transitions: Collection[Transition] = self.transitions_path(path)
@@ -530,7 +586,8 @@ class System(Immutable):
 
     def transitions_path(self, paths: List[str]) -> List[Transition]:
         '''
-        Return the path of transitions between configurations matching the patterns.
+        Return the path of transitions between configurations matching the
+        patterns.
         '''
         assert len(paths) > 1
 
@@ -562,7 +619,8 @@ class System(Immutable):
         transitions: List[Transition]
     ) -> None:
         '''
-        Return the shortest path from a specific configuration to a configuration that matches the specified pattern.
+        Return the shortest path from a specific configuration to a
+        configuration that matches the specified pattern.
         '''
         to_configuration_names = set(self.matching_configuration_names(to_pattern))
 
@@ -614,8 +672,8 @@ class System(Immutable):
         merge_messages: bool = False
     ) -> None:
         '''
-        Print a ``dot`` file visualizing the space of the possible system configuration states and
-        the transitions between them.
+        Print a ``dot`` file visualizing the space of the possible system
+        configuration states and the transitions between them.
         '''
         file.write('digraph G {\n')
         file.write('fontname = "Sans-Serif";\n')
@@ -790,7 +848,8 @@ class System(Immutable):
 
     def print_time(self, file: 'TextIO', label: str, path: List[str]) -> None:  # pylint: disable=too-many-locals
         '''
-        Print a ``dot`` file visualizing the interaction between agents along the specified path.
+        Print a ``dot`` file visualizing the interaction between agents along
+        the specified path.
         '''
         transitions = self.transitions_path(path)
 
@@ -900,8 +959,8 @@ def message_times(  # pylint: disable=too-many-locals
     configuration_by_name: Dict[str, Configuration]
 ) -> Tuple[Dict[Tuple[int, str], int], Dict[int, Tuple[Message, int, int]]]:
     '''
-    Return for each time and message the unique message id,
-    and for each unique message id the message and the first and last time it existed.
+    Return for each time and message the unique message id, and for each unique
+    message id the message and the first and last time it existed.
     '''
     message_id_by_times: Dict[Tuple[int, str], int] = {}
     message_lifetime_by_id: Dict[int, Tuple[Message, int, int]] = {}
@@ -1170,24 +1229,24 @@ class Model:
         message_index: Optional[int] = None
     ) -> None:
         '''
-        Deliver the specified message to its target, creating new transitions and, if needed, new pending configurations.
+        Deliver the specified message to its target, creating new transitions
+        and, if needed, new pending configurations.
         '''
         agent_index = self.agent_indices[message.target_agent_name]
         agent = configuration.agents[agent_index]
-        handler = getattr(agent, '_%s_when_%s' % (message.state.name, agent.state.name), None)
 
-        actions: List[Action] = []
+        actions: Optional[List[Action]] = None
+
+        handler = getattr(agent, '_%s_when_%s' % (message.state.name, agent.state.name), None)
         if handler is not None:
             actions = handler(message)
 
         if actions is None:
+            self.missing_handler(configuration, agent, message, message_index)
             return
 
-        if len(actions) == 0:
-            self.missing_handler(configuration, agent, message, message_index)
-        else:
-            for action in actions:
-                self.perform_action(configuration, agent, agent_index, action, message, message_index)
+        for action in actions:
+            self.perform_action(configuration, agent, agent_index, action, message, message_index)
 
     def perform_action(  # pylint: disable=too-many-arguments
         self,
@@ -1199,7 +1258,8 @@ class Model:
         message_index: Optional[int]
     ) -> None:
         '''
-        Perform one of the actions the agent might take as a response to the message.
+        Perform one of the actions the agent might take as a response to the
+        message.
         '''
         if action.next_state is None:
             new_agent = None
@@ -1284,7 +1344,8 @@ class Model:
 
     def validated_configuration(self, configuration: Configuration) -> Configuration:
         '''
-        Attach all relevant :py:const:`Invalid` indicators to a :py:const:`Configuration`.
+        Attach all relevant :py:const:`Invalid` indicators to a
+        :py:const:`Configuration`.
         '''
         if self.validate is None:
             return configuration
@@ -1327,7 +1388,8 @@ def main(
     epilog: str = ''
 ) -> None:
     '''
-    A universal main function for invoking the functionality provided by this package.
+    A universal main function for invoking the functionality provided by this
+    package.
 
     Run with ``-h`` or ``--help`` for a full list of the options.
     '''
@@ -1353,15 +1415,16 @@ def main(
     transitions_parser = subparsers.add_parser('transitions',
                                                help='Print a tab-separated file of all transitions between system states.',
                                                epilog='''
-        Generate a tab-separated file, with headers, containing transitions between system states.
-        The columns in the file are: from_configuration_name, delivered_message_source_agent_name,
-        delivered_message_name, delivered_message_data, delivered_message_target_agent_name, and
+        Generate a tab-separated file, with headers, containing transitions between
+        system states.  The columns in the file are: from_configuration_name,
+        delivered_message_source_agent_name, delivered_message_name,
+        delivered_message_data, delivered_message_target_agent_name, and
         to_configuration_name.
 
-        By default lists all transitions. If two or more `--configuration PATTERN` flags are
-        specified, generate a list showing the shortest path between the matching configurations.
-        The first pattern must match only a single configuration, to identify a unique starting
-        point for the path.
+        By default lists all transitions. If two or more `--configuration PATTERN`
+        flags are specified, generate a list showing the shortest path between the
+        matching configurations.  The first pattern must match only a single
+        configuration, to identify a unique starting point for the path.
     ''')
     transitions_parser.set_defaults(function=transitions_command)
     transitions_parser.add_argument('-m', '--messages', action='store_true',
@@ -1371,11 +1434,12 @@ def main(
 
     space_parser = subparsers.add_parser('space', help='Print a graphviz dot file visualizing the states space.',
                                          epilog='''
-        Generate a graphviz `dot` diagram visualizing the states space. By default generates a
-        diagram containing "everything", which has the advantage of completeness but is unwieldy for
-        even simple systems. Typically one uses a combination of flags to restrict the amount of
-        information included in the diagram. Selecting the right combination depends on both the
-        model and what you are trying to achieve. See the README file for some examples.
+        Generate a graphviz `dot` diagram visualizing the states space. By default
+        generates a diagram containing "everything", which has the advantage of
+        completeness but is unwieldy for even simple systems. Typically one uses a
+        combination of flags to restrict the amount of information included in the
+        diagram. Selecting the right combination depends on both the model and what you
+        are trying to achieve. See the README file for some examples.
     ''')
     space_parser.add_argument('-l', '--label', metavar='STR', default='Total Space', help='Specify a label for the graph.')
     space_parser.add_argument('-c', '--cluster', metavar='AGENT', action='append', default=[],
@@ -1387,9 +1451,9 @@ def main(
 
     time_parser = subparsers.add_parser('time', help='Print a graphviz dot file visualizing an interaction path.',
                                          epilog='''
-        Generate a graphviz `dot` diagram visualizing the interactions between agents along a path
-        between configurations. This requires specifying the `--configuration` flag at least twice
-        to identify the path.
+        Generate a graphviz `dot` diagram visualizing the interactions between agents
+        along a path between configurations. This requires specifying the
+        `--configuration` flag at least twice to identify the path.
     ''')
     time_parser.add_argument('-l', '--label', metavar='STR', default='Total Space', help='Specify a label for the graph.')
     time_parser.add_argument('-c', '--configuration', metavar='PATTERN', action='append', default=[],

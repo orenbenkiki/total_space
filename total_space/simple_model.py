@@ -39,14 +39,14 @@ class ClientAgent(Agent):
         '''
         return ClientAgent(name=name, state=CLIENT_IDLE_STATE)
 
-    def _time_when_wait(self, _message: Message) -> List[Action]:
-        return [Action.NOP]
+    def _time_when_wait(self, _message: Message) -> Optional[Collection[Action]]:
+        return Agent.IGNORE
 
-    def _time_when_idle(self, _message: Message) -> List[Action]:
+    def _time_when_idle(self, _message: Message) -> Optional[Collection[Action]]:
         request = Message(source_agent_name=self.name, target_agent_name='server', state=State(name='request', data=self.name))
         return [Action(name='send_request', next_state=CLIENT_WAIT_STATE, send_messages=(request,))]
 
-    def _response_when_wait(self, message: Message) -> List[Action]:
+    def _response_when_wait(self, message: Message) -> Optional[Collection[Action]]:
         assert message.state.data == self.name
         return [Action(name='receive_response', next_state=CLIENT_IDLE_STATE, send_messages=())]
 
@@ -96,7 +96,7 @@ class PartialServerAgent(Agent):
         '''
         return cls(name=name, state=SERVER_READY_STATE)
 
-    def _time_when_busy(self, _message: Message) -> List[Action]:
+    def _time_when_busy(self, _message: Message) -> Optional[Collection[Action]]:
         assert isinstance(self.state.data, str)
         done_client_name = self.state.data
         response = Message(source_agent_name=self.name,
@@ -105,12 +105,15 @@ class PartialServerAgent(Agent):
 
         return [Action(name='done', next_state=SERVER_READY_STATE, send_messages=(response,))]
 
-    def _request_when_ready(self, message: Message) -> List[Action]:
+    def _time_when_ready(self, _message: Message) -> Optional[Collection[Action]]:
+        return Agent.UNEXPECTED
+
+    def _request_when_ready(self, message: Message) -> Optional[Collection[Action]]:
         next_state = SERVER_STATE(name='busy', data=message.state.data)
         return [Action(name='receive_request', next_state=next_state, send_messages=())]
 
-    def _request_when_busy(self, _message: Message) -> None:
-        return None
+    def _request_when_busy(self, _message: Message) -> Optional[Collection[Action]]:
+        return Agent.DEFER
 
 
 class FullServerAgent(PartialServerAgent):
@@ -118,8 +121,8 @@ class FullServerAgent(PartialServerAgent):
     A full server.
     '''
 
-    def _time_when_ready(self, _message: Message) -> List[Action]:
-        return [Action.NOP]
+    def _time_when_ready(self, _message: Message) -> Optional[Collection[Action]]:
+        return Agent.IGNORE
 
 
 def flags(parser: ArgumentParser) -> None:
