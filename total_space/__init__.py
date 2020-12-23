@@ -27,7 +27,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
 
 __all__ = [
@@ -1160,8 +1160,8 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
     mid_time_counter = time_counter + 1
     mid_node = print_agent_state_node(file, mid_time_counter, agent, color)
 
-    file.write('"%s" -> "%s" [ penwidth=3, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
-               % (last_agent_node, mid_node, color))
+    file.write('"%s" -> "%s" [ penwidth=%s, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
+               % (last_agent_node, mid_node, penwidth, color))
     last_agent_node = mid_node
 
     return last_agent_node, last_message_name, last_message_node
