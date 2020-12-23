@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='total_space',
-    version='0.2.1',
+    version='0.2.2',
     description='Investigate the total state space of communicating finite state machines',
     long_description_content_type='text/plain',
     long_description='''

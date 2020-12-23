@@ -27,7 +27,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 
 __all__ = [
@@ -225,28 +225,19 @@ class Agent(Immutable):
     shorthand for returning a collection with a single :py:attr:`Action.NOP`
     action.
 
-    If the method returns :py:attr:`Agent.DEFER`, then this indicates that the
-    message will not be received while the agent is in the current state.
-    Instead the agent will receive the message later, after it transitions to
-    some other state, either because time has passed, or because another
-    message was received.
+    A common pattern is for an agent to contain serial sub-flows, where upon
+    receiving some message, it emits a request and enters a state where it
+    awaits the response, and refuses to receive any other message until it
+    arrives; any messages arriving during this window are deferred until the
+    response arrives and are only handled then.
 
-    It is possible to instead manually include a queue of pending messages
-    inside the agent state, add the message to it, and deal with the message
-    when the agent reaches a suitable state. This however is tedius to
-    implement, and results in an identical model, at least in the common case
-    where the order of serving such messages does not matter.
-
-    It is difficult to automatically ensure that a deferred message will
-    eventually be handled by the agent. This can manifest either due to the
-    agent never reaching some state, which should be detected when examining
-    the state transition graph; or when multiple copies of "similar" messages
-    are created and never delivered.
-
-    Unreachable agent states scenario should be detected when searching for
-    paths between different agent states. Generating "too many" copies of
-    "similar" in-flight messages should be prevented by implementing an
-    appropriate :py:func:`Configuration.invalid` method.
+    To implement this, the agent should override the
+    :py:func:`Agent.is_deferring` method to return ``True`` while in the
+    window. In addition, while the agent is in the window, the handler method
+    should return :py:attr:`Agent.DEFER` for all deferred messages. Once a
+    response message that ends the window arrives, the handler method should
+    return an action that moves the agent to a different state, in which
+    :py:func:`Agent.is_deferring` will return ``False``.
     '''
 
     __slots__ = ['name', 'state']
@@ -265,9 +256,6 @@ class Agent(Immutable):
     #: be fixed.
     UNEXPECTED = None
 
-    #: Return this from a handler to indicate the agent
-
-
     def __init__(self, *, name: str, state: State) -> None:
         with initializing():
             #: The name of the agent for visualization.
@@ -275,6 +263,20 @@ class Agent(Immutable):
 
             #: The state of the agent.
             self.state = state
+
+    def is_deferring(self) -> bool:  # pylint: disable=no-self-use
+        '''
+        Return whether the agent will be deferring some messages while in the
+        current state.
+
+        If this is true, then the agent is inside some "interrupt window",
+        basically blocking until a specific message arrives to complete the
+        window and move to a different (normal) state. While in this window,
+        the agent's handler method(s) should return :py:attr:`Agent.DEFER` for
+        any message that would only be handled following (and not during) the
+        window.
+        '''
+        return False
 
     def with_state(self, state: State) -> 'Agent':
         '''
@@ -1047,7 +1049,7 @@ def print_invalid_time_node(file: 'TextIO', invalid: Invalid) -> str:
     return node
 
 
-def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-arguments,too-many-statements
+def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-arguments,too-many-statements,too-many-branches
     file: 'TextIO',
     transitions: List[Transition],
     configuration_by_name: Dict[str, Configuration],
@@ -1064,11 +1066,20 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
     file.write('fontsize = 24;\n')
     file.write('label = "%s";\n' % agent_name)
 
-    color = 'darkgreen'
+    time_counter = 0
+
     configuration = configuration_by_name[transitions[0].from_configuration_name]
     agent = configuration.agents[agent_index]
+    is_deferring = agent.is_deferring()
 
-    time_counter = 0
+    if is_deferring:
+        color = 'indigo'
+        penwidth = 6
+    else:
+        color = 'darkgreen'
+        penwidth = 3
+    color_is_dark = True
+
     mid_node = print_agent_state_node(file, time_counter, agent, color)
 
     last_message_node: Optional[str] = None
@@ -1076,14 +1087,15 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
 
     time_counter += 1
     last_agent_node = print_agent_state_node(file, time_counter, agent, color, new_state=True)
-    file.write('"%s" -> "%s" [ penwidth=3, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
-               % (mid_node, last_agent_node, color))
+    file.write('"%s" -> "%s" [ penwidth=%s, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
+               % (mid_node, last_agent_node, penwidth, color))
 
     for transition in transitions:
         mid_time_counter = time_counter + 1
         to_time_counter = time_counter + 2
         to_configuration = configuration_by_name[transition.to_configuration_name]
         to_agent = to_configuration.agents[agent_index]
+        to_deferring = to_agent.is_deferring()
 
         mid_node = '%s@%s' % (agent_name, mid_time_counter)
 
@@ -1115,26 +1127,39 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
             did_message = True
 
         print_agent_state_node(file, mid_time_counter, to_agent, color, did_message=did_message)
+
         new_state = agent.state != to_agent.state
         agent_node = print_agent_state_node(file, to_time_counter, to_agent, color, new_state=new_state)
-        file.write('"%s" -> "%s" [ penwidth=3, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
-                   % (last_agent_node, mid_node, color))
+        file.write('"%s" -> "%s" [ penwidth=%s, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
+                   % (last_agent_node, mid_node, penwidth, color))
         if agent.state != to_agent.state:
-            if color == 'darkgreen':
-                color = 'yellowgreen'
+            color_is_dark = not color_is_dark
+            if to_deferring:
+                penwidth = 6
+                if color_is_dark:
+                    color = 'indigo'
+                else:
+                    color = 'purple'
             else:
-                color = 'darkgreen'
-        file.write('"%s" -> "%s" [ penwidth=3, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
-                   % (mid_node, agent_node, color))
+                penwidth = 3
+                if color_is_dark:
+                    color = 'darkgreen'
+                else:
+                    color = 'yellowgreen'
+
+        file.write('"%s" -> "%s" [ penwidth=%s, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
+                   % (mid_node, agent_node, penwidth, color))
 
         last_agent_node = agent_node
 
         time_counter = to_time_counter
         configuration = to_configuration
         agent = to_agent
+        is_deferring = to_deferring
 
     mid_time_counter = time_counter + 1
     mid_node = print_agent_state_node(file, mid_time_counter, agent, color)
+
     file.write('"%s" -> "%s" [ penwidth=3, color=%s, weight=1000, dir=forward, arrowhead=none ];\n'
                % (last_agent_node, mid_node, color))
     last_agent_node = mid_node
@@ -1244,6 +1269,10 @@ class Model:
         if actions is None:
             self.missing_handler(configuration, agent, message, message_index)
             return
+
+        if len(actions) == 0 and not agent.is_deferring():
+            raise RuntimeError('agent: %s in non-deferring state: %s defers message: %s'
+                               % (agent.name, agent.state.name, message.state.name))
 
         for action in actions:
             self.perform_action(configuration, agent, agent_index, action, message, message_index)

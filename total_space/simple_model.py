@@ -10,6 +10,7 @@ A simple model of server with two clients.
 # pylint: disable=no-name-in-module
 # pylint: disable=no-self-use
 # pylint: disable=too-few-public-methods
+# pylint: disable=unsubscriptable-object
 # pylint: disable=unused-wildcard-import
 # pylint: disable=wildcard-import
 
@@ -111,6 +112,9 @@ class PartialServerAgent(Agent):
     def _request_when_ready(self, message: Message) -> Optional[Collection[Action]]:
         next_state = SERVER_STATE(name='busy', data=message.state.data)
         return [Action(name='receive_request', next_state=next_state, send_messages=())]
+
+    def is_deferring(self) -> bool:
+        return self.state.name == 'busy'
 
     def _request_when_busy(self, _message: Message) -> Optional[Collection[Action]]:
         return Agent.DEFER
