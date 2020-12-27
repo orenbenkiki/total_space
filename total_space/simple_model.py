@@ -116,9 +116,10 @@ class PartialServerAgent(Agent):
     def is_deferring(self) -> bool:
         return self.state.name == 'busy'
 
-    def _request_when_busy(self, _message: Message) -> Optional[Collection[Action]]:
-        return Agent.DEFER
-
+    # Implied because ``is_deferring`` returns ``True`` in the ``busy`` state:
+    #
+    # def _request_when_busy(self, _message: Message) -> Optional[Collection[Action]]:
+    #     return Agent.DEFER
 
 class FullServerAgent(PartialServerAgent):
     '''

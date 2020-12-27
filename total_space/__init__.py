@@ -27,7 +27,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 
 
 __all__ = [
@@ -233,10 +233,13 @@ class Agent(Immutable):
 
     To implement this, the agent should override the
     :py:func:`Agent.is_deferring` method to return ``True`` while in the
-    window. In addition, while the agent is in the window, the handler method
-    should return :py:attr:`Agent.DEFER` for all deferred messages. Once a
-    response message that ends the window arrives, the handler method should
-    return an action that moves the agent to a different state, in which
+    window. When this is the case, you only need to implement handler methods
+    for the acceptable messages; messages for which no handler method exists
+    are automatically considered to be deferred. This is equivalent to creating
+    explicit handler methods that return :py:attr:`Agent.DEFER`.
+
+    Once a response message that ends the window arrives, the handler method
+    should return an action that moves the agent to a different state, in which
     :py:func:`Agent.is_deferring` will return ``False``.
     '''
 
@@ -272,9 +275,9 @@ class Agent(Immutable):
         If this is true, then the agent is inside some "interrupt window",
         basically blocking until a specific message arrives to complete the
         window and move to a different (normal) state. While in this window,
-        the agent's handler method(s) should return :py:attr:`Agent.DEFER` for
-        any message that would only be handled following (and not during) the
-        window.
+        missing handler methods are treated as if they return
+        :py:attr:`Agent.DEFER`, indicating the message would only be handled
+        following (and not during) the window
         '''
         return False
 
@@ -1259,18 +1262,21 @@ class Model:
         '''
         agent_index = self.agent_indices[message.target_agent_name]
         agent = configuration.agents[agent_index]
+        is_deferring = agent.is_deferring()
 
-        actions: Optional[List[Action]] = None
+        actions: Optional[Collection[Action]] = None
 
         handler = getattr(agent, '_%s_when_%s' % (message.state.name, agent.state.name), None)
         if handler is not None:
             actions = handler(message)
+        elif is_deferring:
+            actions = ()
 
         if actions is None:
             self.missing_handler(configuration, agent, message, message_index)
             return
 
-        if len(actions) == 0 and not agent.is_deferring():
+        if len(actions) == 0 and not is_deferring:
             raise RuntimeError('agent: %s in non-deferring state: %s defers message: %s'
                                % (agent.name, agent.state.name, message.state.name))
 
