@@ -33,5 +33,5 @@ def test_case(case: str) -> None:
     if result:
         assert result  # Count successful test assertions
     else:
-        pytest.fail('The file: tests/%s.actual is different from the file: tests/%s.expected'
-                    % (case, case), False)
+        pytest.fail('The file: tests/%s.actual is different from the file: tests/%s.expected\n=== Actual=== :\n%s'
+                    % (case, case, open('tests/%s.actual' % case).read()), False)
