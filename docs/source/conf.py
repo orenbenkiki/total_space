@@ -25,7 +25,7 @@ copyright = '2020, Oren Ben-Kiki'
 author = 'Oren Ben-Kiki'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.5'
+release = '0.2.6'
 
 # -- Extensions configuration ---------------------------------------------------
 
