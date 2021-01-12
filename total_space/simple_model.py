@@ -141,15 +141,15 @@ def model(args: Namespace) -> List[Agent]:
     '''
     Create a model given the command line flags.
     '''
-    if args.partial:
-        server = PartialServerAgent
-    else:
-        server = FullServerAgent
-
     if args.invalid:
         PartialServerAgent.StateClass = InvalidServerState
 
-    agents: List[Agent] = [server()]
+    agents: List[Agent]
+    if args.partial:
+        agents = [PartialServerAgent()]
+    else:
+        agents = [FullServerAgent()]
+
     agents += [ClientAgent(client_index) for client_index in range(args.clients)]
     return agents
 
