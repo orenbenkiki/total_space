@@ -20,6 +20,7 @@ Investigate the total state space of communicating state machines.
 
 from argparse import ArgumentParser
 from argparse import Namespace
+from copy import copy
 import re
 import sys
 from contextlib import contextmanager
@@ -27,7 +28,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.2.4'
+__version__ = '0.2.5'
 
 
 __all__ = [
@@ -285,7 +286,10 @@ class Agent(Immutable):
         '''
         Return a new agent with a modified state.
         '''
-        return self.__class__(name=self.name, state=state)
+        with initializing():
+            other = copy(self)
+            other.state = state
+        return other
 
     def validate(self) -> Collection[str]:  # pylint: disable=no-self-use
         '''
