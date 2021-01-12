@@ -26,7 +26,6 @@ def test_case(case: str) -> None:
     '''
     Compare actual vs. expected file for a specific test case.
     '''
-    sys.stderr.write('\nCASE: %s\n' % case)
     flags = open('tests/%s.case' % case).read().split()
     sys.argv = ['test', '-o', 'tests/%s.actual' % case] + flags
     total_space.main(flags=simple_model.flags, model=simple_model.model)
@@ -34,5 +33,5 @@ def test_case(case: str) -> None:
     if result:
         assert result  # Count successful test assertions
     else:
-        pytest.fail('The file: tests/%s.actual is different from the file: tests/%s.expected\n=== Actual=== :\n%s'
-                    % (case, case, open('tests/%s.actual' % case).read()), False)
+        pytest.fail('The file: tests/%s.actual is different from the file: tests/%s.expected'
+                    % (case, case), False)
