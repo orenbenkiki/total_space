@@ -26,6 +26,7 @@ def test_case(case: str) -> None:
     '''
     Compare actual vs. expected file for a specific test case.
     '''
+    sys.stderr.write('\nCASE: %s\n' % case)
     flags = open('tests/%s.case' % case).read().split()
     sys.argv = ['test', '-o', 'tests/%s.actual' % case] + flags
     total_space.main(flags=simple_model.flags, model=simple_model.model)

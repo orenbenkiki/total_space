@@ -104,10 +104,14 @@ class PartialServerAgent(Agent):
         return [Action(name='done', next_state=PartialServerAgent.ReadyState, send_messages=(response,))]
 
     def _time_when_ready(self, _message: Message) -> Optional[Collection[Action]]:
+        import sys  # TODOX
+        sys.stderr.write('TODOX unexpected\n')
         return Agent.UNEXPECTED
 
     def _request_when_ready(self, message: Message) -> Optional[Collection[Action]]:
         next_state = PartialServerAgent.StateClass(name='busy', data=message.state.data)
+        import sys  # TODOX
+        sys.stderr.write('TODOX state %s -> %s -> %s -> %s\n' % (PartialServerAgent.StateClass, next_state.__class__, next_state, next_state.validate()))
         return [Action(name='receive_request', next_state=next_state, send_messages=())]
 
     def is_deferring(self) -> bool:
@@ -141,13 +145,17 @@ def model(args: Namespace) -> List[Agent]:
     '''
     Create a model given the command line flags.
     '''
+    import sys  # TODOX
     if args.invalid:
+        sys.stderr.write('TODOX invalid model\n')
         PartialServerAgent.StateClass = InvalidServerState
 
     agents: List[Agent]
     if args.partial:
+        sys.stderr.write('TODOX partial model\n')
         agents = [PartialServerAgent()]
     else:
+        sys.stderr.write('TODOX full model\n')
         agents = [FullServerAgent()]
 
     agents += [ClientAgent(client_index) for client_index in range(args.clients)]

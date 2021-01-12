@@ -684,6 +684,8 @@ class System(Immutable):
         Print a ``dot`` file visualizing the space of the possible system
         configuration states and the transitions between them.
         '''
+        import sys
+        sys.stderr.write('TODOX SPACE\n')
         file.write('digraph G {\n')
         file.write('fontname = "Sans-Serif";\n')
         file.write('fontsize = 32;\n')
@@ -708,6 +710,8 @@ class System(Immutable):
         '''
         Print all the nodes of the ``dot`` file.
         '''
+        import sys
+        sys.stderr.write('TODOX SPACE NODES\n')
         node_names: Set[str] = set()
         if merge_messages:
             configurations = tuple([configuration.only_agents() for configuration in self.configurations])
@@ -717,7 +721,11 @@ class System(Immutable):
         if len(cluster_by_agents) == 0:
             for configuration in configurations:
                 if configuration.name in reachable_configuration_names:
+                    sys.stderr.write('TODOX NODE %s\n' % configuration.name)
                     print_space_node(file, configuration, node_names)
+                else:
+                    import sys
+                    sys.stderr.write('TODOX UNREACHABLE %s\n' % configuration.name)
             return
 
         agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(configurations[0].agents)}
@@ -931,6 +939,8 @@ def print_space_node(file: 'TextIO', configuration: Configuration, node_names: S
     else:
         color = 'lightcoral'
         label = '\n\n'.join([invalid_label(invalid) for invalid in configuration.invalids])
+    import sys
+    sys.stderr.write('TODOX LABEL %s\n' % label)
     file.write('"%s" [ label="%s", shape=box, style=filled, color=%s];\n' % (configuration.name, label, color))
 
 
@@ -1309,6 +1319,8 @@ class Model:
             if len(reasons) == 0:
                 reasons = new_agent.validate()
             invalids = [Invalid(kind='agent', name=agent.name, reason=reason) for reason in reasons]
+            import sys  # TODOX
+            sys.stderr.write('TODOX invalids: %s\n'  % invalids)
 
         for sent_message in action.send_messages:
             reasons = sent_message.state.validate()
@@ -1367,6 +1379,10 @@ class Model:
 
         if from_configuration == to_configuration:
             return
+
+        if len(invalids) > 0:
+            import sys  # TODOX
+            sys.stderr.write('TODOX invalid to_config: %s -> %s\n' % (to_configuration.name, str(to_configuration)))
 
         transition = Transition(from_configuration_name=from_configuration.name,
                                 delivered_message=message,
@@ -1552,5 +1568,7 @@ def output(args: Namespace) -> 'Iterator[TextIO]':
     if args.output is None:
         yield sys.stdout
     else:
+        import sys
+        sys.stderr.write('TODOX output to: %s\n' % args.output)
         with open(args.output, 'w') as file:
             yield file
