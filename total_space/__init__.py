@@ -28,7 +28,7 @@ from functools import total_ordering
 from typing import *
 
 
-__version__ = '0.2.6'
+__version__ = '0.2.7'
 
 
 __all__ = [
@@ -91,11 +91,11 @@ class State(Immutable):
     A state of an :py:const:`Agent`.
 
     In general the state of an agent could be "anything" (including "nothing" -
-    None).  It "should" be immutable; use named tuples for structures and
+    None). It "should" be immutable; use named tuples for structures and
     simple tuples for arrays/lists.
 
     In general one can bury all the information in the data field and use a
-    single state name.  However for clarity, the overall space of all possible
+    single state name. However for clarity, the overall space of all possible
     states is split into named sub-spaces.
     '''
 
@@ -218,7 +218,7 @@ class Agent(Immutable):
     Each such method should have a single parameter for the message, and return
     either ``None`` or a ``Collection`` of possible :py:const:`Action`, any one
     of which may be taken when receiving the message while at the current
-    state.  Providing multiple alternatives allows modeling a non-deterministic
+    state. Providing multiple alternatives allows modeling a non-deterministic
     agent (e.g., modeling either a hit or a miss in a cache).
 
     If the method returns :py:attr:`Agent.IGNORE`, then the agent silently
@@ -457,10 +457,14 @@ class System(Immutable):
     def __init__(
         self,
         *,
+        initial_configuration: Configuration,
         configurations: Tuple[Configuration, ...],
         transitions: Tuple[Transition, ...]
     ) -> None:
         with initializing():
+            #: The initial configuration.
+            self.initial_configuration = initial_configuration
+
             #: All the possible configurations the system could be at.
             self.configurations = configurations
 
@@ -478,7 +482,8 @@ class System(Immutable):
         initial state.
         '''
         model = Model(agents, validate)
-        return System(configurations=tuple(sorted(model.configurations.values())),
+        return System(initial_configuration=model.initial_configuration,
+                      configurations=tuple(sorted(model.configurations.values())),
                       transitions=tuple(sorted(model.transitions)))
 
     def focus_on_agents(self, keep_agents: Collection[str]) -> 'System':
@@ -538,7 +543,18 @@ class System(Immutable):
             new_transitions[str(new_transition)] = new_transition
 
         new_configurations = tuple([new_configuration_by_name[name] for name in sorted(reachable_configuration_names)])
-        return System(configurations=new_configurations, transitions=tuple(sorted(new_transitions.values())))
+        new_initial_configuration = \
+                new_configuration_by_name[new_name_by_old_name[self.initial_configuration.name]]
+        return System(initial_configuration=new_initial_configuration,
+                      configurations=new_configurations,
+                      transitions=tuple(sorted(new_transitions.values())))
+
+    def print_agents(self, file: 'TextIO') -> None:
+        '''
+        Print a list of all the system configurations to a file.
+        '''
+        for agent in sorted(self.initial_configuration.agents):
+            file.write('%s\n' % agent.name)
 
     def print_states(self, file: 'TextIO') -> None:
         '''
@@ -660,6 +676,8 @@ class System(Immutable):
         '''
         Return all the names of the configurations that match a pattern.
         '''
+        if pattern == 'INIT':
+            return [self.initial_configuration.name]
         try:
             regexp = re.compile(pattern)
         except BaseException:
@@ -1221,22 +1239,25 @@ class Model:
         #: How to validate configurations.
         self.validate = validate
 
-        initial_configuration = self.validated_configuration(Configuration(agents=agents))
+        #: The initial configuration.
+        self.initial_configuration = self.validated_configuration(Configuration(agents=agents))
 
         #: Quick mapping from agent name to its index in the agents tuple.
-        self.agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(initial_configuration.agents)}
+        self.agent_indices = {agent.name: agent_index
+                              for agent_index, agent
+                              in enumerate(self.initial_configuration.agents)}
 
         #: All the transitions between configurations.
         self.transitions: List[Transition] = []
 
         #: All the known configurations, keyed by their name.
-        self.configurations = {initial_configuration.name: initial_configuration}
+        self.configurations = {self.initial_configuration.name: self.initial_configuration}
 
-        if not initial_configuration.valid:
+        if not self.initial_configuration.valid:
             return
 
         #: The names of all the configurations we didn't fully model yet.
-        self.pending_configuration_names = [initial_configuration.name]
+        self.pending_configuration_names = [self.initial_configuration.name]
 
         while len(self.pending_configuration_names) > 0:
             self.explore_configuration(self.pending_configuration_names.pop())
@@ -1445,6 +1466,12 @@ def main(
 
     subparsers = parser.add_subparsers(title='command', metavar='')
 
+    states_parser = subparsers.add_parser('agents', help='Print a list of all system agents.',
+                                          epilog='''
+        Generate a simple list of all agents, one per line.
+    ''')
+    states_parser.set_defaults(function=agents_command)
+
     states_parser = subparsers.add_parser('states', help='Print a list of all possible system states.',
                                           epilog='''
         Generate a simple list of all states, one per line.
@@ -1455,21 +1482,22 @@ def main(
                                                help='Print a tab-separated file of all transitions between system states.',
                                                epilog='''
         Generate a tab-separated file, with headers, containing transitions between
-        system states.  The columns in the file are: from_configuration_name,
+        system states. The columns in the file are: from_configuration_name,
         delivered_message_source_agent_name, delivered_message_name,
         delivered_message_data, delivered_message_target_agent_name, and
         to_configuration_name.
 
         By default lists all transitions. If two or more `--configuration PATTERN`
         flags are specified, generate a list showing the shortest path between the
-        matching configurations.  The first pattern must match only a single
+        matching configurations. The first pattern must match only a single
         configuration, to identify a unique starting point for the path.
     ''')
     transitions_parser.set_defaults(function=transitions_command)
     transitions_parser.add_argument('-m', '--messages', action='store_true',
                                     help='Do not show messages in configurations, and add a column for sent messages.')
     transitions_parser.add_argument('-c', '--configuration', metavar='PATTERN', action='append', default=[],
-                                    help='Generate only a path going through a configuration matching the regexp pattern.')
+                                    help='Generate only a path going through a configuration matching the regexp pattern. '
+                                         'The special pattern INIT matches the initial configuration.')
 
     space_parser = subparsers.add_parser('space', help='Print a graphviz dot file visualizing the states space.',
                                          epilog='''
@@ -1509,6 +1537,13 @@ def main(
         system = system.only_agents()
     with output(args) as file:
         args.function(args, file, system)
+
+
+def agents_command(_args: Namespace, file: 'TextIO', system: System) -> None:
+    '''
+    Implement the ``agents`` command.
+    '''
+    system.print_agents(file)
 
 
 def states_command(_args: Namespace, file: 'TextIO', system: System) -> None:
