@@ -35,10 +35,7 @@ setup(
     ],
     keywords='sample setuptools development',
     packages=['total_space'],
-    extras_require={
-        '': ['pytest'],
-    },
-    package_data={
-        '': ['VERSION.txt', 'LICENSE.txt']
-    },
+    install_requires=['immutabledict'],
+    extras_require={'': ['pytest']},
+    package_data={'': ['VERSION.txt', 'LICENSE.txt']},
 )

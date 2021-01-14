@@ -27,6 +27,11 @@ from contextlib import contextmanager
 from functools import total_ordering
 from typing import *
 
+try:
+    from immutabledict import immutabledict  # type: ignore # pylint: disable=import-error
+except ModuleNotFoundError:
+    immutabledict = dict  # pylint: disable=invalid-name
+
 
 __version__ = '0.2.7'
 
@@ -260,13 +265,21 @@ class Agent(Immutable):
     #: be fixed.
     UNEXPECTED = None
 
-    def __init__(self, *, name: str, state: State) -> None:
+    def __init__(self, *, name: str, state: State,
+                 children: Optional[Dict[str, State]] = None) -> None:
         with initializing():
             #: The name of the agent for visualization.
             self.name = name
 
             #: The state of the agent.
             self.state = state
+
+            #: The state of child agents.
+            #:
+            #: A child agent is an agent whose name starts with the name of
+            #: this agent, followed by a ``-``. The key to the dictionary is
+            #: the full child agent name.
+            self.children = immutabledict(children or {})
 
     def is_deferring(self) -> bool:  # pylint: disable=no-self-use
         '''
@@ -289,6 +302,15 @@ class Agent(Immutable):
         with initializing():
             other = copy(self)
             other.state = state
+        return other
+
+    def with_children(self, children: Optional[Dict[str, State]]) -> 'Agent':
+        '''
+        Return a new agent with a modified state.
+        '''
+        with initializing():
+            other = copy(self)
+            other.children = immutabledict(children or {})
         return other
 
     def validate(self) -> Collection[str]:  # pylint: disable=no-self-use
@@ -1226,7 +1248,7 @@ def print_agent_state_node(
     return node
 
 
-class Model:
+class Model:  # pylint: disable=too-many-instance-attributes
     '''
     Model the whole system.
     '''
@@ -1239,13 +1261,25 @@ class Model:
         #: How to validate configurations.
         self.validate = validate
 
-        #: The initial configuration.
-        self.initial_configuration = self.validated_configuration(Configuration(agents=agents))
+        agents = tuple(sorted(agents))
 
         #: Quick mapping from agent name to its index in the agents tuple.
         self.agent_indices = {agent.name: agent_index
                               for agent_index, agent
-                              in enumerate(self.initial_configuration.agents)}
+                              in enumerate(agents)}
+
+        children, parents = Model.family_of_agents(agents)
+
+        #: The children of each agent, if any.
+        self.agent_children = children
+
+        #: The parents of each agent, if any.
+        self.agent_parents = parents
+
+        agents = tuple(self.agent_with_children(agent, agents) for agent in agents)
+
+        #: The initial configuration.
+        self.initial_configuration = self.validated_configuration(Configuration(agents=agents))
 
         #: All the transitions between configurations.
         self.transitions: List[Transition] = []
@@ -1261,6 +1295,35 @@ class Model:
 
         while len(self.pending_configuration_names) > 0:
             self.explore_configuration(self.pending_configuration_names.pop())
+
+    @staticmethod
+    def family_of_agents(
+        agents: Collection[Agent]
+    ) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+        '''
+        Collect the children of each agent.
+        '''
+        agent_children: Dict[str, List[str]] = {agent.name: [] for agent in agents}
+        agent_parents: Dict[str, List[str]] = {agent.name: [] for agent in agents}
+
+        for parent_agent in agents:
+            prefix = parent_agent.name + '-'
+            for child_agent in agents:
+                if not child_agent.name.startswith(prefix):
+                    continue
+                agent_children[parent_agent.name].append(child_agent.name)
+                agent_parents[child_agent.name].append(parent_agent.name)
+
+        return agent_children, agent_parents
+
+    def agent_with_children(self, agent: Agent, agents: Tuple[Agent, ...]) -> Agent:
+        '''
+        Return the agent modified to contain the state of its children.
+        '''
+        child_names = self.agent_children[agent.name]
+        child_agents = [agents[self.agent_indices[child_name]] for child_name in child_names]
+        children = {child_agent.name: child_agent.state for child_agent in child_agents}
+        return agent.with_children(children)
 
     def explore_configuration(self, configuration_name: str) -> None:
         '''
@@ -1372,7 +1435,14 @@ class Model:
             new_agents = from_configuration.agents
         else:
             assert agent_index is not None
+
             new_agents = tuple_replace(from_configuration.agents, agent_index, agent)
+
+            for parent_name in self.agent_parents[agent.name]:
+                parent_index = self.agent_indices[parent_name]
+                parent_agent = new_agents[parent_index]
+                parent_agent = self.agent_with_children(parent_agent, new_agents)
+                new_agents = tuple_replace(new_agents, parent_index, parent_agent)
 
         if message_index is None:
             new_messages_in_flight = from_configuration.messages_in_flight

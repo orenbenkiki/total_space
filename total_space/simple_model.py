@@ -21,6 +21,30 @@ from typing import *
 from total_space import *
 
 
+class ParentAgent(Agent):
+    '''
+    A no-op parent peeking into the state of the clients.
+    '''
+
+    def __init__(self) -> None:
+        '''
+        Create a parent in the trivial (empty) state.
+        '''
+        super().__init__(name='client', state=State(name='idle', data=None))
+
+    def _time_when_idle(self, _message: Message) -> Optional[Collection[Action]]:
+        return Agent.IGNORE
+
+    def _check_when_idle(self, message: Message) -> Optional[Collection[Action]]:
+        child_name = message.state.data
+        assert isinstance(child_name, str)
+        assert child_name.startswith('client-')
+        assert isinstance(self.children[child_name], State)
+        assert self.children[child_name].name == 'check'
+        confirm = Message(source_agent_name=self.name, target_agent_name=child_name, state=State(name='confirm', data=child_name))
+        return [Action(name='send_confirm', next_state=None, send_messages=(confirm,))]
+
+
 class ClientAgent(Agent):
     '''
     A simple client that talks with a singleton server.
@@ -31,6 +55,9 @@ class ClientAgent(Agent):
 
     #: Trivial state for the client agent.
     WaitState = State(name='wait', data=None)
+
+    #: Trivial state for the client agent.
+    CheckState = State(name='check', data=None)
 
     def __init__(self, index: int) -> None:
         '''
@@ -45,11 +72,20 @@ class ClientAgent(Agent):
 
     def _time_when_idle(self, _message: Message) -> Optional[Collection[Action]]:
         request = Message(source_agent_name=self.name, target_agent_name='server', state=State(name='request', data=self.name))
-        return [Action(name='send_request', next_state=ClientAgent.WaitState, send_messages=(request,))]
+        check = Message(source_agent_name=self.name, target_agent_name='client', state=State(name='check', data=self.name))
+        return [Action(name='send_request', next_state=ClientAgent.WaitState, send_messages=(request,)),
+                Action(name='check_parent', next_state=ClientAgent.CheckState, send_messages=(check,))]
+
+    def is_deferring(self) -> bool:
+        return self.state.name == 'check'
 
     def _response_when_wait(self, message: Message) -> Optional[Collection[Action]]:
         assert message.state.data == self.name
         return [Action(name='receive_response', next_state=ClientAgent.IdleState, send_messages=())]
+
+    def _confirm_when_check(self, message: Message) -> Optional[Collection[Action]]:
+        assert message.state.data == self.name
+        return [Action(name='receive_confirm', next_state=ClientAgent.IdleState, send_messages=())]
 
 
 class InvalidServerState(State):
@@ -152,6 +188,7 @@ def model(args: Namespace) -> List[Agent]:
     else:
         agents = [FullServerAgent()]
 
+    agents += [ParentAgent()]
     agents += [ClientAgent(client_index) for client_index in range(args.clients)]
     return agents
 
