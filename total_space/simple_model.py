@@ -26,11 +26,11 @@ class ParentAgent(Agent):
     A no-op parent peeking into the state of the clients.
     '''
 
-    def __init__(self) -> None:
+    def __init__(self, clients_count: int) -> None:
         '''
         Create a parent in the trivial (empty) state.
         '''
-        super().__init__(name='client', state=State(name='idle', data=None))
+        super().__init__(name='client', state=State(name='idle', data=None), max_in_flight_messages=clients_count)
 
     def _time_when_idle(self, _message: Message) -> Optional[Collection[Action]]:
         return Agent.IGNORE
@@ -124,11 +124,11 @@ class PartialServerAgent(Agent):
     #: Trivial state for the server agent.
     ReadyState = State(name='ready', data=None)
 
-    def __init__(self) -> None:
+    def __init__(self, clients_count: int) -> None:
         '''
         Create a server in the initial (ready) state.
         '''
-        super().__init__(name='server', state=PartialServerAgent.ReadyState)
+        super().__init__(name='server', state=PartialServerAgent.ReadyState, max_in_flight_messages=clients_count)
 
     def _time_when_busy(self, _message: Message) -> Optional[Collection[Action]]:
         assert isinstance(self.state.data, str)
@@ -184,11 +184,11 @@ def model(args: Namespace) -> List[Agent]:
 
     agents: List[Agent]
     if args.partial:
-        agents = [PartialServerAgent()]
+        agents = [PartialServerAgent(args.clients)]
     else:
-        agents = [FullServerAgent()]
+        agents = [FullServerAgent(args.clients)]
 
-    agents += [ParentAgent()]
+    agents += [ParentAgent(args.clients)]
     agents += [ClientAgent(client_index) for client_index in range(args.clients)]
     return agents
 
