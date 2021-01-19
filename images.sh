@@ -1,7 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 rm -rf images/*
 export PYTHON3=python
 export PYTHONPATH=.:$PYTHONPATH
+set -eou pipefail
 set -x
 
 $PYTHON3 -m total_space.simple_model space -l 'Complete Model' \

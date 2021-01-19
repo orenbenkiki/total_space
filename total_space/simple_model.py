@@ -63,7 +63,7 @@ class ClientAgent(Agent):
         '''
         Create a client in the initial (idle) state.
         '''
-        with initializing():  # Required to allow modifying this immutable while initializing it.
+        with initializing(self):  # Required to allow modifying this immutable while initializing it.
             self.index = index  # Can add data members which will be immutable from here on.
         super().__init__(name='client-%s' % index, state=ClientAgent.IdleState)
 

@@ -61,11 +61,11 @@ class Immutable:
     data.
     '''
 
-    #: Allow modification of properties when initializing the object.
-    _is_initializing = False
+    #: Allow modification of properties of this object, e.g. when initializing it object.
+    _initializing: Optional[int] = None
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if Immutable._is_initializing:
+        if Immutable._initializing == id(self) or Immutable._initializing < 0:
             object.__setattr__(self, name, value)
         else:
             raise RuntimeError('trying to modify the property: %s of an immutable: %s'
@@ -79,16 +79,19 @@ class Immutable:
 
 
 @contextmanager
-def initializing() -> Iterator[None]:
+def initializing(this: Any) -> Iterator[None]:
     '''
     Allow mutating :py:const:`Immutable` data during initialization.
     '''
     try:
-        was_initalizing = Immutable._is_initializing
-        Immutable._is_initializing = True
+        old_initalizing = Immutable._initializing
+        if this is None:
+            Immutable._initializing = -1
+        else:
+            Immutable._initializing = id(this)
         yield
     finally:
-        Immutable._is_initializing = was_initalizing
+        Immutable._initializing = old_initalizing
 
 
 class State(Immutable):
@@ -107,7 +110,7 @@ class State(Immutable):
     __slots__ = ['name', 'data']
 
     def __init__(self, *, name: str, data: Any = None) -> None:
-        with initializing():
+        with initializing(self):
             #: The state's name, used for visualization and method names.
             self.name = name
 
@@ -132,6 +135,23 @@ class State(Immutable):
         return State(name=self.name, data=None)
 
 
+def modifier(function: Callable) -> Callable:
+    '''
+    Wrap a method that modifies an immutable object, converting it to a method
+    that returns a new object instead.
+
+    The wrapped method may freely change the normally immutable data members.
+    '''
+    def _create_modified(*args: Any, **kwargs: Any) -> Any:
+        assert len(args) > 0
+        with initializing(None):
+            this = copy(args[0])
+        with initializing(this):
+            function(this, *args[1:], **kwargs)
+        return this
+    return _create_modified
+
+
 class Message(Immutable):
     '''
     A message sent from one :py:const:`Agent` to another (or a time message).
@@ -143,7 +163,7 @@ class Message(Immutable):
     __slots__ = ['source_agent_name', 'target_agent_name', 'state']
 
     def __init__(self, *, source_agent_name: str, target_agent_name: str, state: State) -> None:
-        with initializing():
+        with initializing(self):
             #: The name of the agent that generated the message, or ``time``.
             self.source_agent_name = source_agent_name
 
@@ -194,7 +214,7 @@ class Action(Immutable):
     NOP: 'Action'
 
     def __init__(self, *, name: str, next_state: Optional[State] = None, send_messages: Collection[Message] = ()) -> None:
-        with initializing():
+        with initializing(self):
             #: The name of the action for visualization.
             self.name = name
 
@@ -267,7 +287,7 @@ class Agent(Immutable):
 
     def __init__(self, *, name: str, state: State,
                  children: Optional[Dict[str, State]] = None) -> None:
-        with initializing():
+        with initializing(self):
             #: The name of the agent for visualization.
             self.name = name
 
@@ -295,23 +315,19 @@ class Agent(Immutable):
         '''
         return False
 
-    def with_state(self, state: State) -> 'Agent':
+    @modifier
+    def with_state(self, state: State) -> None:
         '''
         Return a new agent with a modified state.
         '''
-        with initializing():
-            other = copy(self)
-            other.state = state
-        return other
+        self.state = state
 
-    def with_children(self, children: Optional[Dict[str, State]]) -> 'Agent':
+    @modifier
+    def with_children(self, children: Optional[Dict[str, State]]) -> None:
         '''
         Return a new agent with a modified state.
         '''
-        with initializing():
-            other = copy(self)
-            other.children = immutabledict(children or {})
-        return other
+        self.children = immutabledict(children or {})
 
     def validate(self) -> Collection[str]:  # pylint: disable=no-self-use
         '''
@@ -353,7 +369,7 @@ class Invalid(Immutable):
         assert kind in ['agent', 'message', 'configuration']
         assert (name is None) == (kind == 'configuration')
 
-        with initializing():
+        with initializing(self):
             #: The kind of invalid condition (``agent``, ``message``, or a whole system ``configuration``).
             self.kind = kind
 
@@ -383,7 +399,7 @@ class Configuration(Immutable):
         messages_in_flight: Collection[Message] = (),
         invalids: Collection[Invalid] = ()
     ) -> None:
-        with initializing():
+        with initializing(self):
             #: All the agents with their state.
             self.agents = tuple(sorted(agents))
 
@@ -451,7 +467,7 @@ class Transition(Immutable):
     __slots__ = ['from_configuration_name', 'delivered_message', 'to_configuration_name']
 
     def __init__(self, *, from_configuration_name: str, delivered_message: Message, to_configuration_name: str) -> None:
-        with initializing():
+        with initializing(self):
             #: The name of the configuration before the transition.
             self.from_configuration_name = from_configuration_name
 
@@ -483,7 +499,7 @@ class System(Immutable):
         configurations: Tuple[Configuration, ...],
         transitions: Tuple[Transition, ...]
     ) -> None:
-        with initializing():
+        with initializing(self):
             #: The initial configuration.
             self.initial_configuration = initial_configuration
 
