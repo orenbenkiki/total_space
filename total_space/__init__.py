@@ -1440,6 +1440,12 @@ class Model:  # pylint: disable=too-many-instance-attributes
             invalids.append(Invalid(kind='agent', name=agent.name, reason=reason))
 
         for sent_message in action.send_messages:
+            if sent_message.source_agent_name != agent.name:
+                raise RuntimeError(f'message {sent_message} pretends to be from {sent_message.source_agent_name} but is from {agent}')
+            if sent_message.state.name == 'time':
+                raise RuntimeError(f'time message {sent_message} is sent from an agent {agent}')
+            if sent_message.target_agent_name not in self.agent_indices:
+                raise RuntimeError(f'message {sent_message} is sent to unknown {message.target_agent_name} from {agent}')
             reasons = sent_message.state.validate()
             if len(reasons) == 0:
                 reasons = sent_message.validate()
