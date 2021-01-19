@@ -1486,9 +1486,9 @@ class Model:  # pylint: disable=too-many-instance-attributes
         '''
         for invalid in invalids:
             if not self.allow_invalid:
-                raise RuntimeError(f'delivering the message: {message}\n'
-                                   f'in the configuration: {from_configuration}\n'
-                                   f'is invalid because {invalid}')
+                raise RuntimeError(f'in configuration: {from_configuration}\n'
+                                   f'when delivering: {message}\n'
+                                   f'then {invalid}')
 
         if agent is None:
             new_agents = from_configuration.agents
