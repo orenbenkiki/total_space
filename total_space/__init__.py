@@ -28,11 +28,6 @@ from functools import total_ordering
 from typing import *
 
 try:
-    from mypy_extensions import *
-except ModuleNotFoundError:
-    pass
-
-try:
     from immutabledict import immutabledict  # type: ignore # pylint: disable=import-error
 except ModuleNotFoundError:
     immutabledict = dict  # pylint: disable=invalid-name
@@ -141,6 +136,7 @@ class State(Immutable):
 
 Self = TypeVar('Self', bound='Immutable')
 
+# MYPY: def modifier(function: Callable[Concatenate[Self, P], None]) -> Callable[Concatenate[Self, P], Self]:
 def modifier(function: Callable) -> Callable:
     '''
     Wrap a method that modifies an immutable object, converting it to a method
@@ -148,6 +144,7 @@ def modifier(function: Callable) -> Callable:
 
     The wrapped method may freely change the normally immutable data members.
     '''
+    # MYPY: def _create_modified(this: Self, *args: P.args, **kwargs: P.kwargs) -> Self:
     def _create_modified(this: Self, *args: Any, **kwargs: Any) -> Self:
         with initializing(None):
             that = copy(this)
