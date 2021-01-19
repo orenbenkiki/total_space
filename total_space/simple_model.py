@@ -168,28 +168,28 @@ def flags(parser: ArgumentParser) -> None:
     Add command line flags for testing partial and invalid models.
     '''
     group = parser.add_argument_group('model')
-    group.add_argument('-p', '--partial', action='store_true', help='Generate a partial model.')
-    group.add_argument('-i', '--invalid', action='store_true', help='Generate an invalid model.')
-    group.add_argument('-c', '--clients', metavar='NUMBER', type=int, default=2, help='The number of clients.')
+    group.add_argument('-P', '--Partial', action='store_true', help='Generate a partial model.')
+    group.add_argument('-I', '--Invalid', action='store_true', help='Generate an invalid model.')
+    group.add_argument('-C', '--Clients', metavar='NUMBER', type=int, default=2, help='The number of clients.')
 
 
 def model(args: Namespace) -> List[Agent]:
     '''
     Create a model given the command line flags.
     '''
-    if args.invalid:
+    if args.Invalid:
         PartialServerAgent.StateClass = InvalidServerState
     else:
         PartialServerAgent.StateClass = State
 
     agents: List[Agent]
-    if args.partial:
-        agents = [PartialServerAgent(args.clients)]
+    if args.Partial:
+        agents = [PartialServerAgent(args.Clients)]
     else:
-        agents = [FullServerAgent(args.clients)]
+        agents = [FullServerAgent(args.Clients)]
 
-    agents += [ParentAgent(args.clients)]
-    agents += [ClientAgent(client_index) for client_index in range(args.clients)]
+    agents += [ParentAgent(args.Clients)]
+    agents += [ClientAgent(client_index) for client_index in range(args.Clients)]
     return agents
 
 

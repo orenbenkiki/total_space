@@ -523,13 +523,14 @@ class System(Immutable):
     def compute(
         *,
         agents: Collection[Agent],
-        validate: Optional[Validation] = None
+        validate: Optional[Validation] = None,
+        allow_invalid: bool = False,
     ) -> 'System':
         '''
         Compute the total state space of a system given some agents in their
         initial state.
         '''
-        model = Model(agents, validate)
+        model = Model(agents, validate, allow_invalid)
         return System(initial_configuration=model.initial_configuration,
                       configurations=tuple(sorted(model.configurations.values())),
                       transitions=tuple(sorted(model.transitions)))
@@ -1289,10 +1290,14 @@ class Model:  # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         agents: Collection[Agent],
-        validate: Optional[Validation] = None
+        validate: Optional[Validation] = None,
+        allow_invalid: bool = False,
     ) -> None:
         #: How to validate configurations.
         self.validate = validate
+
+        #: Whether to allow invalid configurations (but do not further explore them).
+        self.allow_invalid = allow_invalid
 
         agents = tuple(sorted(agents))
 
@@ -1469,7 +1474,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         self.new_transition(configuration, None, None, message, message_index, [invalid])
 
-    def new_transition(  # pylint: disable=too-many-arguments
+    def new_transition(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         from_configuration: Configuration,
         agent: Optional[Agent],
@@ -1482,6 +1487,12 @@ class Model:  # pylint: disable=too-many-instance-attributes
         '''
         Create a new transition, and, if needed, a new pending configuration.
         '''
+        for invalid in invalids:
+            if not self.allow_invalid:
+                raise RuntimeError(f'delivering the message: {message}\n'
+                                   f'in the configuration: {from_configuration}\n'
+                                   f'is invalid: {invalid}')
+
         if agent is None:
             new_agents = from_configuration.agents
         else:
@@ -1576,6 +1587,8 @@ def main(
     '''
     parser = ArgumentParser(description=description, epilog=epilog)
     parser.add_argument('-o', '--output', action='store', metavar='FILE', help='Write output to the specified file.')
+    parser.add_argument('-i', '--invalid', action='store_true',
+                         help='Allow invalid conditions (but do not further explore them).')
     parser.add_argument('-f', '--focus', metavar='AGENT', action='append', default=[],
                         help='Focus only on the specified agent. Repeat for focusing on multiple agents.')
     parser.add_argument('-n', '--names', action='store_true',
@@ -1649,7 +1662,9 @@ def main(
     time_parser.set_defaults(function=time_command)
 
     args = parser.parse_args(sys.argv[1:])
-    system = System.compute(agents=model(args), validate=validate)
+    if 'function' not in args:
+        raise RuntimeError('no command specified; run with --help for a list of commands')
+    system = System.compute(agents=model(args), validate=validate, allow_invalid=args.invalid)
     if len(args.focus) > 0:
         system = system.focus_on_agents(args.focus)
     if args.names:
