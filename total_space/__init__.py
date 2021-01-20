@@ -1431,9 +1431,9 @@ class Model:  # pylint: disable=too-many-instance-attributes
                 reasons = new_agent.validate()
             invalids = [Invalid(kind='agent', name=agent.name, reason=reason) for reason in reasons]
 
-        in_flight_count = len([message for message
+        in_flight_count = len([in_flight_message for in_flight_message
                                in configuration.messages_in_flight
-                               if message.source_agent_name == agent.name])
+                               if in_flight_message.source_agent_name == agent.name])
         send_count = len(action.send_messages)
 
         if in_flight_count + send_count > agent.max_in_flight_messages:
