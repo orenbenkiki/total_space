@@ -41,7 +41,7 @@ class ParentAgent(Agent):
         assert child_name.startswith('client-')
         assert isinstance(self.children[child_name], State)
         assert self.children[child_name].name == 'check'
-        confirm = Message(source_agent_name=self.name, target_agent_name=child_name, state=State(name='confirm', data=child_name))
+        confirm = Message(source_agent_name=self.name, target_agent_name=child_name, state=State(name='confirm!', data=child_name))
         return [Action(name='send_confirm', next_state=None, send_messages=(confirm,))]
 
 

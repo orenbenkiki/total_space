@@ -1014,7 +1014,11 @@ def print_space_message(file: 'TextIO', message: Message, message_nodes: Set[str
     if label in message_nodes:
         return
     message_nodes.add(label)
-    file.write(f'"{label}" [ label="{{{label}}}", shape=record, style=filled, color=paleturquoise ];\n')
+    if message.state.name[-1:] == '!':
+        color = 'darkturquoise'
+    else:
+        color = 'paleturquoise'
+    file.write(f'"{label}" [ label="{{{label}}}", shape=record, style=filled, color={color} ];\n')
 
 
 def message_space_label(message: Message) -> str:
@@ -1106,7 +1110,11 @@ def print_message_time_nodes(file: 'TextIO', message_id: int, message: Message, 
             file.write(f'"{prev_node}" -> "{node}" '
                        '[ penwidth=3, color=mediumblue, weight=1000, dir=forward, arrowhead=none ];\n')
         else:
-            file.write(f'"{node}" [ label="{message.state}", shape=box, style=filled, color=paleturquoise ];\n')
+            if message.state.name[-1:] == '!':
+                color = 'darkturquoise'
+            else:
+                color = 'paleturquoise'
+            file.write(f'"{node}" [ label="{message.state}", shape=box, style=filled, color={color} ];\n')
 
     head_node = ''
     for time in range(0, first_time + 1):
@@ -1195,7 +1203,7 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
                 message_node = print_time_message_node(file, message, time_counter)
             else:
                 message_id = message_id_by_times[(time_counter, str(message))]
-                message_node = f'message-{message_id}-{to_time_counter}'
+                message_node = f'message-{message_id}-{time_counter}'
             if did_message:
                 arrowhead = 'none'
             else:
@@ -1250,7 +1258,11 @@ def print_time_message_node(file: 'TextIO', message: Message, time_counter: int)
     Print a node for a time message that triggered a transition.
     '''
     node = f'{message.target_agent_name}-time-{time_counter}'
-    file.write(f'"{node}" [ label="time", shape=box, style=filled, color=paleturquoise ];\n')
+    if message.state.name[-1:] == '!':
+        color = 'darkturquoise'
+    else:
+        color = 'paleturquoise'
+    file.write(f'"{node}" [ label="time", shape=box, style=filled, color={color} ];\n')
     return node
 
 
@@ -1367,6 +1379,15 @@ class Model:  # pylint: disable=too-many-instance-attributes
         configuration = self.configurations[configuration_name]
         assert configuration.valid
 
+        delivered_immediate_messages = False
+        for message_index, message in enumerate(configuration.messages_in_flight):
+            if message.state.name[-1:] == '!':
+                self.deliver_message(configuration, message, message_index)
+                delivered_immediate_messages = True
+
+        if delivered_immediate_messages:
+            return
+
         for agent in configuration.agents:
             self.deliver_message(configuration, Message.time(agent))
 
@@ -1389,7 +1410,10 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         actions: Optional[Collection[Action]] = None
 
-        handler = getattr(agent, f'_{message.state.name}_when_{agent.state.name}', None)
+        message_name = message.state.name
+        if message_name[-1:] == '!':
+            message_name = message_name[:-1]
+        handler = getattr(agent, f'_{message_name}_when_{agent.state.name}', None)
         if handler is not None:
             actions = handler(message)
         elif is_deferring:
