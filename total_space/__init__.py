@@ -522,12 +522,13 @@ class System(Immutable):
         agents: Collection[Agent],
         validate: Optional[Validation] = None,
         allow_invalid: bool = False,
+        debug: bool = False,
     ) -> 'System':
         '''
         Compute the total state space of a system given some agents in their
         initial state.
         '''
-        model = Model(agents, validate, allow_invalid)
+        model = Model(agents, validate, allow_invalid=allow_invalid, debug=debug)
         return System(initial_configuration=model.initial_configuration,
                       configurations=tuple(sorted(model.configurations.values())),
                       transitions=tuple(sorted(model.transitions)))
@@ -1300,13 +1301,18 @@ class Model:  # pylint: disable=too-many-instance-attributes
         self,
         agents: Collection[Agent],
         validate: Optional[Validation] = None,
+        *,
         allow_invalid: bool = False,
+        debug: bool = False,
     ) -> None:
         #: How to validate configurations.
         self.validate = validate
 
         #: Whether to allow invalid configurations (but do not further explore them).
         self.allow_invalid = allow_invalid
+
+        #: Whether to print every created configuration to stderr for debugging.
+        self.debug = debug
 
         agents = tuple(sorted(agents))
 
@@ -1555,6 +1561,9 @@ class Model:  # pylint: disable=too-many-instance-attributes
         if to_configuration.valid:
             self.pending_configuration_names.append(to_configuration.name)
 
+        if self.debug:
+            sys.stderr.write(f'{to_configuration.name}\n')
+
     def validated_configuration(self, configuration: Configuration) -> Configuration:
         '''
         Attach all relevant :py:const:`Invalid` indicators to a
@@ -1610,6 +1619,8 @@ def main(
     parser.add_argument('-o', '--output', action='store', metavar='FILE', help='Write output to the specified file.')
     parser.add_argument('-i', '--invalid', action='store_true',
                          help='Allow invalid conditions (but do not further explore them).')
+    parser.add_argument('-d', '--debug', action='store_true',
+                         help='Print every configuration as it is created to stderr for debugging.')
     parser.add_argument('-f', '--focus', metavar='AGENT', action='append', default=[],
                         help='Focus only on the specified agent. Repeat for focusing on multiple agents.')
     parser.add_argument('-n', '--names', action='store_true',
@@ -1685,7 +1696,7 @@ def main(
     args = parser.parse_args(sys.argv[1:])
     if 'function' not in args:
         raise RuntimeError('no command specified; run with --help for a list of commands')
-    system = System.compute(agents=model(args), validate=validate, allow_invalid=args.invalid)
+    system = System.compute(agents=model(args), validate=validate, allow_invalid=args.invalid, debug=args.debug)
     if len(args.focus) > 0:
         system = system.focus_on_agents(args.focus)
     if args.names:
