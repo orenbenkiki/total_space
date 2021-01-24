@@ -93,6 +93,26 @@ def initializing(this: Any) -> Iterator[None]:
         Immutable._initializing = old_initalizing
 
 
+Self = TypeVar('Self', bound='Immutable')
+
+# MYPY: def modifier(function: Callable[Concatenate[Self, P], None]) -> Callable[Concatenate[Self, P], Self]:
+def modifier(function: Callable) -> Callable:
+    '''
+    Wrap a method that modifies an immutable object, converting it to a method
+    that returns a new object instead.
+
+    The wrapped method may freely change the normally immutable data members.
+    '''
+    # MYPY: def _create_modified(this: Self, *args: P.args, **kwargs: P.kwargs) -> Self:
+    def _create_modified(this: Self, *args: Any, **kwargs: Any) -> Self:
+        with initializing(None):
+            that = copy(this)
+        with initializing(that):
+            function(that, *args, **kwargs)
+        return that
+    return _create_modified
+
+
 class State(Immutable):
     '''
     A state of an :py:const:`Agent`.
@@ -133,25 +153,12 @@ class State(Immutable):
         '''
         return State(name=self.name, data=None)
 
-
-Self = TypeVar('Self', bound='Immutable')
-
-# MYPY: def modifier(function: Callable[Concatenate[Self, P], None]) -> Callable[Concatenate[Self, P], Self]:
-def modifier(function: Callable) -> Callable:
-    '''
-    Wrap a method that modifies an immutable object, converting it to a method
-    that returns a new object instead.
-
-    The wrapped method may freely change the normally immutable data members.
-    '''
-    # MYPY: def _create_modified(this: Self, *args: P.args, **kwargs: P.kwargs) -> Self:
-    def _create_modified(this: Self, *args: Any, **kwargs: Any) -> Self:
-        with initializing(None):
-            that = copy(this)
-        with initializing(that):
-            function(that, *args, **kwargs)
-        return that
-    return _create_modified
+    @modifier
+    def with_name(self, name: str) -> None:
+        '''
+        Return a new state with a modified name.
+        '''
+        self.name = name
 
 
 class Message(Immutable):
@@ -203,6 +210,37 @@ class Message(Immutable):
                        target_agent_name=self.target_agent_name,
                        state=State(name=self.state.name))
 
+    @modifier
+    def with_name(self, name: str) -> None:
+        '''
+        Return a new state with a modified state with the new name.
+        '''
+        self.state = self.state.with_name(name)
+
+    def is_immediate(self) -> bool:
+        '''
+        Return whether this is an immediate message (the name ends with ``!``).
+        '''
+        return self.state.name[-1] == '!'
+
+    def is_replacement(self) -> bool:
+        '''
+        Return whether this message may replace an in-flight message.
+        '''
+        return '=>' in self.state.name
+
+    def clean_name(self) -> str:
+        '''
+        Return the clean message name (w/o the ``!`` suffix or the ``=>`` prefix).
+        '''
+        message_name = self.state.name
+        if self.is_immediate():
+            message_name = message_name[:-1]
+        index = message_name.rfind('=>')
+        if index >= 0:
+            message_name = message_name[index + 2:]
+        return message_name
+
 
 class Action(Immutable):
     '''
@@ -226,6 +264,18 @@ class Action(Immutable):
             #: Any :py:const:`Message` sent by the agent.
             #: We assume the communication fabric may reorder messages.
             #: That is, there's no guarantee at what order the sent messages will be received by their targets.
+            #:
+            #: If the name of a message ends with ``!``, then the message is
+            #: taken to be "immediate", that is, it will be the 1st message to
+            #: be delivered. Otherwise the message is added to the in-flight
+            #: messages and may be delivered at any order.
+            #:
+            #: If the message contains ``=>`` then it is expected to contain a
+            #: regexp before the ``=>`` and the message name following it. If
+            #: there is a single existing mesages matching the regexp it will be
+            #: removed and replaced by the new message. The regexp should also
+            #: match the empty string if the message may be added as usual
+            #: without replacing any existing message.
             self.send_messages = tuple(send_messages)
 
 Action.NOP = Action(name='nop')
@@ -491,6 +541,99 @@ class Transition(Immutable):
 #: The type of a function that validates a :py:const:`Configuration`,
 #: returning a hopefully empty collection of reasons it is invalid.
 Validation = Callable[[Configuration], Collection[str]]
+
+class TimeTracking:
+    '''
+    Track data to generate time graphs.
+    '''
+    def __init__(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+        self,
+        transitions: List[Transition],
+        configuration_by_name: Dict[str, Configuration]
+    ) -> None:
+        #: Assign unique ID to each message.
+        self.message_id_by_times: Dict[Tuple[int, str], int] = {}
+
+        #: The first and last time each message is used.
+        self.message_lifetime_by_id: Dict[int, Tuple[int, int, Message]] = {}
+
+        #: The previous message to use for invisible edges to force node ranks.
+        self.prev_message_nodes: Dict[Tuple[str, str, int], str] = {}
+
+        #: The message that was replaced by any message, if any.
+        self.replaced_message_id: Dict[int, int] = {}
+
+        #: The nodes we already connected with invisible edges.
+        self.connected_message_nodes: Set[Tuple[str, str]] = set()
+
+        active_messages: Dict[str, Tuple[Message, int, int]] = {}
+
+        time_counter = 1
+        configuration = configuration_by_name[transitions[0].from_configuration_name]
+
+        for message in configuration.messages_in_flight:
+            message_text = str(message)
+            if message_text in active_messages.keys():
+                raise NotImplementedError('multiple instances of the same message: ' + message_text)
+            message_id = len(active_messages)
+            self.message_id_by_times[(0, message_text)] = message_id
+            active_messages[message_text] = (message, message_id, 0)
+
+            key = sorted([message.source_agent_name, message.target_agent_name])
+            self.prev_message_nodes[(key[0], key[1], 0)] = f'message-{message_id}-0'
+
+        next_message_id = len(active_messages)
+
+        for transition in transitions:
+            from_configuration = configuration_by_name[transition.from_configuration_name]
+            to_configuration = configuration_by_name[transition.to_configuration_name]
+
+            mid_time_counter = time_counter + 1
+            to_time_counter = time_counter + 2
+            to_active_messages: Dict[str, Tuple[Message, int, int]] = {}
+
+            for message in to_configuration.messages_in_flight:
+                message_text = str(message)
+                if message_text in to_active_messages:
+                    raise NotImplementedError('multiple instances of the same message: ' + message_text)
+
+                active = active_messages.get(message_text)
+                if active is None:
+                    active = (message, next_message_id, to_time_counter)
+                    next_message_id += 1
+                message_id = active[1]
+                to_active_messages[message_text] = active
+                self.message_id_by_times[(mid_time_counter, message_text)] = message_id
+                self.message_id_by_times[(to_time_counter, message_text)] = message_id
+
+                key = sorted([message.source_agent_name, message.target_agent_name])
+                self.prev_message_nodes[(key[0], key[1], to_time_counter)] = f'message-{message_id}-{to_time_counter}'
+
+                if not message.is_replacement():
+                    continue
+                replaced_name = message.state.name[:message.state.name.index('=>')]
+                replaced_id: Optional[int] = None
+                for old_message in from_configuration.messages_in_flight:
+                    if old_message.source_agent_name == message.source_agent_name \
+                            and old_message.target_agent_name == message.target_agent_name \
+                            and old_message.clean_name() == replaced_name:
+                        assert replaced_id is None
+                        replaced_id = self.message_id_by_times[(time_counter - 1,  str(old_message))]
+                assert replaced_id is not None
+                self.replaced_message_id[message_id] = replaced_id
+
+            for message_text, (message, message_id, first_time_counter) in active_messages.items():
+                if message_text not in to_active_messages:
+                    self.message_lifetime_by_id[message_id] = (first_time_counter, time_counter, message)
+
+            configuration = to_configuration
+            time_counter = to_time_counter
+            active_messages = to_active_messages
+
+        for message_text, (message, message_id, first_time_counter) in active_messages.items():
+            if message_text not in to_active_messages:
+                self.message_lifetime_by_id[message_id] = (first_time_counter, time_counter, message)
+
 
 class System(Immutable):
     '''
@@ -938,7 +1081,7 @@ class System(Immutable):
         configuration_by_name = {configuration.name: configuration for configuration in self.configurations}
         agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(self.configurations[0].agents)}
 
-        message_id_by_times, message_lifetime_by_id = message_times(transitions, configuration_by_name)
+        time_tracking = TimeTracking(transitions, configuration_by_name)
 
         file.write('digraph G {\n')
         file.write('fontname = "Sans-Serif";\n')
@@ -952,19 +1095,16 @@ class System(Immutable):
         for invalid in final_configuration.invalids:
             print_invalid_time_node(file, invalid)
 
-        printed_messages: Set[int] = set()
+        for left_agent in self.configurations[0].agents:
+            for right_agent in self.configurations[0].agents:
+                if right_agent.name <= left_agent.name:
+                    continue
+                print_message_time_nodes_between(file, left_agent, right_agent, time_tracking)
 
         for agent in self.configurations[0].agents:
             last_agent_node, last_message_name, last_message_node = \
-                print_agent_time_nodes(file, transitions, configuration_by_name, message_id_by_times,
+                print_agent_time_nodes(file, transitions, configuration_by_name, time_tracking,
                                        agent.name, agent_indices[agent.name])
-
-            for message_id, (message, first_time, last_time) in message_lifetime_by_id.items():
-                if message.source_agent_name == agent.name:
-                    print_message_time_nodes(file, message_id, message, first_time, last_time)
-                    printed_messages.add(message_id)
-
-            file.write('}\n')
 
             for invalid in final_configuration.invalids:
                 if invalid.kind == 'agent' and invalid.name == agent.name:
@@ -973,10 +1113,6 @@ class System(Immutable):
                     file.write(f'"{last_message_node}" -> "{invalid}" [ penwidth=3, color=crimson, weight=1000 ];\n')
                 else:
                     file.write(f'"{last_agent_node}" -> "{invalid}" [ style=invis ];\n')
-
-        for message_id, (message, first_time, last_time) in message_lifetime_by_id.items():
-            if message_id not in printed_messages:
-                print_message_time_nodes(file, message_id, message, first_time, last_time)
 
         file.write('}\n')
 
@@ -1015,7 +1151,7 @@ def print_space_message(file: 'TextIO', message: Message, message_nodes: Set[str
     if label in message_nodes:
         return
     message_nodes.add(label)
-    if message.state.name[-1:] == '!':
+    if message.is_immediate():
         color = 'darkturquoise'
     else:
         color = 'paleturquoise'
@@ -1026,7 +1162,9 @@ def message_space_label(message: Message) -> str:
     '''
     The label to show for a message.
     '''
-    return f'{message.source_agent_name} &rarr; | {message.state} | &rarr; {message.target_agent_name}'
+    return f'{message.source_agent_name} &rarr; ' \
+           f'| {str(message.state).replace("=>", "&rArr;")} ' \
+           f'| &rarr; {message.target_agent_name}'
 
 
 def invalid_label(invalid: Invalid) -> str:
@@ -1040,91 +1178,113 @@ def invalid_label(invalid: Invalid) -> str:
     return label
 
 
-def message_times(  # pylint: disable=too-many-locals
-    transitions: List[Transition],
-    configuration_by_name: Dict[str, Configuration]
-) -> Tuple[Dict[Tuple[int, str], int], Dict[int, Tuple[Message, int, int]]]:
+def print_message_time_nodes_between(  # pylint: disable=too-many-locals
+    file: 'TextIO',
+    left_agent: Agent,
+    right_agent: Agent,
+    time_tracking: TimeTracking
+) -> None:
     '''
-    Return for each time and message the unique message id, and for each unique
-    message id the message and the first and last time it existed.
+    Print all time nodes for messages between two agents.
     '''
-    message_id_by_times: Dict[Tuple[int, str], int] = {}
-    message_lifetime_by_id: Dict[int, Tuple[Message, int, int]] = {}
-    active_messages: Dict[str, Tuple[Message, int, int]] = {}
+    did_message = False
 
-    time_counter = 1
-    configuration = configuration_by_name[transitions[0].from_configuration_name]
+    for message_id, (first_time, last_time, message) in time_tracking.message_lifetime_by_id.items():
+        if (message.source_agent_name != left_agent.name
+                or message.target_agent_name != right_agent.name) \
+            and (message.source_agent_name != right_agent.name
+                or message.target_agent_name != left_agent.name):
+            continue
 
-    for message in configuration.messages_in_flight:
-        message_text = str(message)
-        if message_text in active_messages.keys():
-            raise NotImplementedError('multiple instances of the same message: ' + message_text)
-        message_id = len(active_messages)
-        message_id_by_times[(0, message_text)] = message_id
-        active_messages[message_text] = (message, message_id, 0)
+        if not did_message:
+            did_message = True
+            file.write(f'subgraph "cluster_between_{left_agent.name}_and_{right_agent.name}" {{\n')
+            file.write('color = white;\n')
+            file.write('fontsize = 0;\n')
+            file.write('label = "";\n')
 
-    next_message_id = len(active_messages)
+        replaced_id = time_tracking.replaced_message_id.get(message_id)
+        if replaced_id is None:
+            continue
 
-    for transition in transitions:
-        to_configuration = configuration_by_name[transition.to_configuration_name]
-        mid_time_counter = time_counter + 1
-        to_time_counter = time_counter + 2
-        to_active_messages: Dict[str, Tuple[Message, int, int]] = {}
+        replaced_last_time = time_tracking.message_lifetime_by_id[replaced_id][1]
+        intermediate_time = replaced_last_time + 1
+        message_first_time = time_tracking.message_lifetime_by_id[message_id][1]
+        assert message_first_time == intermediate_time + 1
+        replaced_node = f'message-{replaced_id}-{replaced_last_time}'
+        intermediate_node = f'message-{message_id}-{intermediate_time}'
+        message_node = f'message-{message_id}-{message_first_time}'
+        time_tracking.connected_message_nodes.add((replaced_node, intermediate_node))
+        time_tracking.connected_message_nodes.add((intermediate_node, message_node))
+        file.write(f'"{intermediate_node}" [ shape=box, label="", penwidth=2, width=0, height=0, color=mediumblue ];\n')
+        file.write(f'"{replaced_node}" -> "{intermediate_node}" [ penwidth=3, dir=forward, arrowhead=none, color=mediumblue ];\n')
+        file.write(f'"{intermediate_node}" -> "{message_node}" [ penwidth=3, color=mediumblue ];\n')
+        key = sorted([message.source_agent_name, message.target_agent_name])
+        time_tracking.prev_message_nodes[(key[0], key[1], replaced_last_time)] = replaced_node
+        time_tracking.prev_message_nodes[(key[0], key[1], intermediate_time)] = intermediate_node
+        time_tracking.prev_message_nodes[(key[0], key[1], message_first_time)] = message_node
 
-        for message in to_configuration.messages_in_flight:
-            message_text = str(message)
-            if message_text in to_active_messages:
-                raise NotImplementedError('multiple instances of the same message: ' + message_text)
+    if not did_message:
+        return
 
-            active = active_messages.get(message_text)
-            if active is None:
-                active = (message, next_message_id, to_time_counter)
-                next_message_id += 1
-            to_active_messages[message_text] = active
-            message_id_by_times[(mid_time_counter, message_text)] = active[1]
-            message_id_by_times[(to_time_counter, message_text)] = active[1]
+    for message_id, (first_time, last_time, message) in time_tracking.message_lifetime_by_id.items():
+        if (message.source_agent_name != left_agent.name
+                or message.target_agent_name != right_agent.name) \
+            and (message.source_agent_name != right_agent.name
+                or message.target_agent_name != left_agent.name):
+            continue
 
-        for message_text, (message, message_id, first_time_counter) in active_messages.items():
-            if message_text not in to_active_messages:
-                message_lifetime_by_id[message_id] = (message, first_time_counter, time_counter)
+        print_message_time_nodes(file, message_id, message, first_time, last_time, time_tracking)
 
-        configuration = to_configuration
-        time_counter = to_time_counter
-        active_messages = to_active_messages
-
-    for message_text, (message, message_id, first_time_counter) in active_messages.items():
-        if message_text not in to_active_messages:
-            message_lifetime_by_id[message_id] = (message, first_time_counter, time_counter)
-
-    return message_id_by_times, message_lifetime_by_id
+    file.write('}\n')
 
 
-def print_message_time_nodes(file: 'TextIO', message_id: int, message: Message, first_time: int, last_time: int) -> None:
+def print_message_time_nodes(  # pylint: disable=too-many-arguments
+    file: 'TextIO',
+    message_id: int,
+    message: Message,
+    first_time: int,
+    last_time: int,
+    time_tracking: TimeTracking
+) -> None:
     '''
     Print all the time nodes for a message exchanged between agents.
     '''
+    key = sorted([message.source_agent_name, message.target_agent_name])
+
+    if not message.is_replacement():
+        for time in range(0, first_time + 1):
+            node = time_tracking.prev_message_nodes.get((key[0], key[1], time))
+            if node is None:
+                node = f'message-{message_id}-{time}'
+                time_tracking.prev_message_nodes[(key[0], key[1], time)] = node
+                file.write(f'"{node}" [ shape=point, label="", style=invis ];\n')
+            if time == 0:
+                continue
+            prev_node = time_tracking.prev_message_nodes[(key[0], key[1], time - 1)]
+            connection = (prev_node, node)
+            if connection in time_tracking.connected_message_nodes:
+                continue
+            time_tracking.connected_message_nodes.add(connection)
+            file.write(f'"{prev_node}" -> "{node}" [ style=invis ];\n')
+
     prev_node = ''
     for time in range(first_time, last_time + 1):
         node = f'message-{message_id}-{time}'
+        time_tracking.prev_message_nodes[(key[0], key[1], time)] = node
         if prev_node != '':
             file.write(f'"{node}" [ shape=box, penwidth=2, width=0, height=0, color=mediumblue ];\n')
             file.write(f'"{prev_node}" -> "{node}" '
                        '[ penwidth=3, color=mediumblue, weight=1000, dir=forward, arrowhead=none ];\n')
         else:
-            if message.state.name[-1:] == '!':
+            if message.is_immediate():
                 color = 'darkturquoise'
             else:
                 color = 'paleturquoise'
+            if message.is_replacement():
+                message = message.with_name(message.state.name[message.state.name.index('=>')+2:])
             file.write(f'"{node}" [ label="{message.state}", shape=box, style=filled, color={color} ];\n')
-
-    head_node = ''
-    for time in range(0, first_time + 1):
-        node = f'message-{message_id}-{time}'
-        if time != first_time:
-            file.write(f'"{node}" [ shape=none, label="" ];\n')
-        if head_node != '':
-            file.write(f'"{head_node}" -> "{node}" [ style=invis ];\n')
-        head_node = node
+        prev_node = node
 
 
 def print_invalid_time_node(file: 'TextIO', invalid: Invalid) -> str:
@@ -1140,7 +1300,7 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
     file: 'TextIO',
     transitions: List[Transition],
     configuration_by_name: Dict[str, Configuration],
-    message_id_by_times: Dict[Tuple[int, str], int],
+    time_tracking: TimeTracking,
     agent_name: str,
     agent_index: int
 ) -> Tuple[str, Optional[str], Optional[str]]:
@@ -1167,13 +1327,13 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
         penwidth = 3
     color_is_dark = True
 
-    mid_node = print_agent_state_node(file, time_counter, agent, color)
+    mid_node = print_agent_state_node(file, time_counter, agent, color, penwidth)
 
     last_message_node: Optional[str] = None
     last_message_name: Optional[str] = None
 
     time_counter += 1
-    last_agent_node = print_agent_state_node(file, time_counter, agent, color, new_state=True)
+    last_agent_node = print_agent_state_node(file, time_counter, agent, color, penwidth, new_state=True)
     file.write(f'"{mid_node}" -> "{last_agent_node}" '
                f'[ penwidth={penwidth}, color={color}, weight=1000, dir=forward, arrowhead=none ];\n')
 
@@ -1187,23 +1347,21 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
         mid_node = f'{agent_name}@{mid_time_counter}'
 
         did_message = False
-        if len(to_configuration.messages_in_flight) > len(configuration.messages_in_flight):
-            assert len(to_configuration.messages_in_flight) == len(configuration.messages_in_flight) + 1
+        if to_configuration.messages_in_flight != configuration.messages_in_flight:
             for message in new_messages(configuration, to_configuration):
                 if message.source_agent_name == agent_name:
-                    message_id = message_id_by_times[(to_time_counter, str(message))]
+                    message_id = time_tracking.message_id_by_times[(to_time_counter, str(message))]
                     last_message_name = message.state.name
                     last_message_node = f'message-{message_id}-{to_time_counter}'
                     file.write(f'"{mid_node}":c -> "{last_message_node}":c '
                                '[ penwidth=3, color=mediumblue, constraint=false ];\n')
-                    did_message = True
 
         message = transition.delivered_message
         if message.target_agent_name == agent_name:
             if message.state.name == 'time':
                 message_node = print_time_message_node(file, message, time_counter)
             else:
-                message_id = message_id_by_times[(time_counter, str(message))]
+                message_id = time_tracking.message_id_by_times[(time_counter, str(message))]
                 message_node = f'message-{message_id}-{time_counter}'
             if did_message:
                 arrowhead = 'none'
@@ -1213,10 +1371,10 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
                        f'[ penwidth=3, color=mediumblue, dir=forward, arrowhead={arrowhead} ];\n')
             did_message = True
 
-        print_agent_state_node(file, mid_time_counter, to_agent, color, did_message=did_message)
+        print_agent_state_node(file, mid_time_counter, to_agent, color, penwidth, did_message=did_message)
 
         new_state = agent.state != to_agent.state
-        agent_node = print_agent_state_node(file, to_time_counter, to_agent, color, new_state=new_state)
+        agent_node = print_agent_state_node(file, to_time_counter, to_agent, color, penwidth, new_state=new_state)
         file.write(f'"{last_agent_node}" -> "{mid_node}" '
                    f'[ penwidth={penwidth}, color={color}, weight=1000, dir=forward, arrowhead=none ];\n')
         if agent.state != to_agent.state:
@@ -1245,11 +1403,13 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
         is_deferring = to_deferring
 
     mid_time_counter = time_counter + 1
-    mid_node = print_agent_state_node(file, mid_time_counter, agent, color)
+    mid_node = print_agent_state_node(file, mid_time_counter, agent, color, penwidth)
 
     file.write(f'"{last_agent_node}" -> "{mid_node}" '
                f'[ penwidth={penwidth}, color={color}, weight=1000, dir=forward, arrowhead=none ];\n')
     last_agent_node = mid_node
+
+    file.write('}\n')
 
     return last_agent_node, last_message_name, last_message_node
 
@@ -1259,7 +1419,7 @@ def print_time_message_node(file: 'TextIO', message: Message, time_counter: int)
     Print a node for a time message that triggered a transition.
     '''
     node = f'{message.target_agent_name}-time-{time_counter}'
-    if message.state.name[-1:] == '!':
+    if message.is_immediate():
         color = 'darkturquoise'
     else:
         color = 'paleturquoise'
@@ -1272,6 +1432,7 @@ def print_agent_state_node(
     time_counter: int,
     agent: Agent,
     color: str,
+    penwidth: int,
     *,
     new_state: bool = False,
     did_message: bool = False
@@ -1284,10 +1445,10 @@ def print_agent_state_node(
         file.write(f'"{node}" [ shape=box, label="{agent.state}", style=filled, color=palegreen ];\n')
     else:
         if did_message:
-            penwidth = 4
+            penwidth += 1
             color = '"#0063cd"'
         else:
-            penwidth = 2
+            penwidth -= 1
         file.write(f'"{node}" [ shape=box, label="", penwidth={penwidth}, width=0, height=0, color={color} ];\n')
     return node
 
@@ -1387,7 +1548,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         delivered_immediate_messages = False
         for message_index, message in enumerate(configuration.messages_in_flight):
-            if message.state.name[-1:] == '!':
+            if message.is_immediate():
                 self.deliver_message(configuration, message, message_index)
                 delivered_immediate_messages = True
 
@@ -1416,10 +1577,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         actions: Optional[Collection[Action]] = None
 
-        message_name = message.state.name
-        if message_name[-1:] == '!':
-            message_name = message_name[:-1]
-        handler = getattr(agent, f'_{message_name}_when_{agent.state.name}', None)
+        handler = getattr(agent, f'_{message.clean_name()}_when_{agent.state.name}', None)
         if handler is not None:
             actions = handler(message)
         elif is_deferring:
@@ -1461,20 +1619,10 @@ class Model:  # pylint: disable=too-many-instance-attributes
                 reasons = new_agent.validate()
             invalids = [Invalid(kind='agent', name=agent.name, reason=reason) for reason in reasons]
 
-        in_flight_count = len([in_flight_message for in_flight_message
-                               in configuration.messages_in_flight
-                               if in_flight_message.source_agent_name == agent.name])
-        send_count = len(action.send_messages)
-
-        if in_flight_count + send_count > agent.max_in_flight_messages:
-            reason = f'sending {send_count} in addition to {in_flight_count} in-flight messages ' \
-                     f'is more than the {agent.max_in_flight_messages} maximal allowed messages'
-            invalids.append(Invalid(kind='agent', name=agent.name, reason=reason))
-
         for sent_message in action.send_messages:
             if sent_message.source_agent_name != agent.name:
                 raise RuntimeError(f'message {sent_message} pretends to be from {sent_message.source_agent_name} but is from {agent}')
-            if sent_message.state.name == 'time':
+            if sent_message.clean_name() == 'time':
                 raise RuntimeError(f'time message {sent_message} is sent from an agent {agent}')
             if sent_message.target_agent_name not in self.agent_indices:
                 raise RuntimeError(f'message {sent_message} is sent to unknown {message.target_agent_name} from {agent}')
@@ -1501,25 +1649,19 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         self.new_transition(configuration, None, None, message, message_index, [invalid])
 
-    def new_transition(  # pylint: disable=too-many-arguments,too-many-locals
+    def new_transition(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
         self,
         from_configuration: Configuration,
         agent: Optional[Agent],
         agent_index: Optional[int],
         message: Message,
         message_index: Optional[int],
-        invalids: Collection[Invalid],
+        invalids: List[Invalid],
         send_messages: Collection[Message] = ()
     ) -> None:
         '''
         Create a new transition, and, if needed, a new pending configuration.
         '''
-        for invalid in invalids:
-            if not self.allow_invalid:
-                raise RuntimeError(f'in configuration: {from_configuration}\n'
-                                   f'when delivering: {message}\n'
-                                   f'then {invalid}')
-
         if agent is None:
             new_agents = from_configuration.agents
         else:
@@ -1538,8 +1680,29 @@ class Model:  # pylint: disable=too-many-instance-attributes
         else:
             new_messages_in_flight = tuple_remove(from_configuration.messages_in_flight, message_index)
 
-        if len(send_messages) > 0:
-            new_messages_in_flight = tuple(sorted(new_messages_in_flight + tuple(send_messages)))
+        new_send_messages = []
+        for send_message in send_messages:
+            if send_message.is_replacement():
+                new_messages_in_flight = replace_message(new_messages_in_flight, send_message)
+            else:
+                new_send_messages.append(send_message)
+
+        new_messages_in_flight = tuple(sorted(new_messages_in_flight + tuple(new_send_messages)))
+
+        if agent is not None:
+            in_flight_count = len([1 for in_flight_message in new_messages_in_flight
+                                   if in_flight_message.source_agent_name == agent.name])
+
+            if in_flight_count > agent.max_in_flight_messages:
+                reason = f'sending {in_flight_count} which is more than ' \
+                         f'the maximal allowed {agent.max_in_flight_messages} messages'
+                invalids.append(Invalid(kind='agent', name=agent.name, reason=reason))
+
+        for invalid in invalids:
+            if not self.allow_invalid:
+                raise RuntimeError(f'in configuration: {from_configuration}\n'
+                                   f'when delivering: {message}\n'
+                                   f'then {invalid}')
 
         to_configuration = self.validated_configuration(Configuration(agents=new_agents,
                                                                       messages_in_flight=new_messages_in_flight,
@@ -1547,6 +1710,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         if from_configuration == to_configuration:
             return
+
 
         transition = Transition(from_configuration_name=from_configuration.name,
                                 delivered_message=message,
@@ -1578,7 +1742,45 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         invalids = [Invalid(kind='configuration', reason=reason) for reason in reasons]
 
-        return Configuration(agents=configuration.agents, messages_in_flight=configuration.messages_in_flight, invalids=invalids)
+        return Configuration(agents=configuration.agents,
+                             messages_in_flight=configuration.messages_in_flight,
+                             invalids=invalids)
+
+
+def replace_message(messages_in_flight: Collection[Message], message: Message) -> Tuple[Message, ...]:
+    '''
+    Replace an existing message with a new one if requested.
+    '''
+    index = message.state.name.index('=>')
+    pattern = re.compile(message.state.name[:index])
+    message_name = message.state.name[index + 2:]
+
+    new_messages_in_flight: List[Message] = []
+    replaced_message: Optional[Message] = None
+    for message_in_flight in messages_in_flight:
+        if message_in_flight.source_agent_name != message.source_agent_name \
+                or message_in_flight.target_agent_name != message.target_agent_name \
+                or not pattern.match(message_in_flight.state.name):
+            new_messages_in_flight.append(message_in_flight)
+            continue
+        if replaced_message is None:
+            replaced_message = message_in_flight
+            message_name = replaced_message.clean_name() + '=>' + message_name
+            message = message.with_name(message_name)
+            new_messages_in_flight.append(message)
+            continue
+        raise RuntimeError(f'the replacement message: {message}\n'
+                           f'can replace either the in-flight message: {replaced_message}\n'
+                           f'or the in-flight-message: {message_in_flight}')
+
+    if replaced_message is None:
+        if not pattern.match(''):
+            raise RuntimeError(f'the replacement message: {message}\n'
+                               f'did not replace any message')
+        message = message.with_name(message_name)
+        new_messages_in_flight.append(message)
+
+    return tuple(new_messages_in_flight)
 
 
 def tuple_replace(data: Tuple, index: int, value: Any) -> Tuple:

@@ -26,11 +26,11 @@ class ParentAgent(Agent):
     A no-op parent peeking into the state of the clients.
     '''
 
-    def __init__(self, clients_count: int) -> None:
+    def __init__(self) -> None:
         '''
         Create a parent in the trivial (empty) state.
         '''
-        super().__init__(name='client', state=State(name='idle', data=None), max_in_flight_messages=clients_count)
+        super().__init__(name='client', state=State(name='idle', data=None))
 
     def _time_when_idle(self, _message: Message) -> Optional[Collection[Action]]:
         return Agent.IGNORE
@@ -72,12 +72,16 @@ class ClientAgent(Agent):
 
     def _time_when_idle(self, _message: Message) -> Optional[Collection[Action]]:
         request = Message(source_agent_name=self.name, target_agent_name='server', state=State(name='request', data=self.name))
-        check = Message(source_agent_name=self.name, target_agent_name='client', state=State(name='check', data=self.name))
+        check = Message(source_agent_name=self.name, target_agent_name='client', state=State(name='(check)?=>check', data=self.name))
         return [Action(name='send_request', next_state=ClientAgent.WaitState, send_messages=(request,)),
                 Action(name='check_parent', next_state=ClientAgent.CheckState, send_messages=(check,))]
 
     def is_deferring(self) -> bool:
         return self.state.name == 'check'
+
+    def _time_when_check(self, _message: Message) -> Optional[Collection[Action]]:
+        recheck = Message(source_agent_name=self.name, target_agent_name='client', state=State(name='(check)?=>check', data=self.name))
+        return [Action(name='recheck', next_state=None, send_messages=(recheck,))]
 
     def _response_when_wait(self, message: Message) -> Optional[Collection[Action]]:
         assert message.state.data == self.name
@@ -188,7 +192,7 @@ def model(args: Namespace) -> List[Agent]:
     else:
         agents = [FullServerAgent(args.Clients)]
 
-    agents += [ParentAgent(args.Clients)]
+    agents += [ParentAgent()]
     agents += [ClientAgent(client_index) for client_index in range(args.Clients)]
     return agents
 
