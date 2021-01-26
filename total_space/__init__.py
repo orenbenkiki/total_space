@@ -20,7 +20,7 @@ Investigate the total state space of communicating state machines.
 
 from argparse import ArgumentParser
 from argparse import Namespace
-from copy import copy
+from copy import deepcopy
 import re
 import sys
 from contextlib import contextmanager
@@ -106,7 +106,7 @@ def modifier(function: Callable) -> Callable:
     # MYPY: def _create_modified(this: Self, *args: P.args, **kwargs: P.kwargs) -> Self:
     def _create_modified(this: Self, *args: Any, **kwargs: Any) -> Self:
         with initializing(None):
-            that = copy(this)
+            that = deepcopy(this)
         with initializing(that):
             function(that, *args, **kwargs)
         return that
