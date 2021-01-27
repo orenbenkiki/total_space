@@ -54,9 +54,6 @@ class ClientAgent(Agent):
     IdleState = State(name='idle', data=None)
 
     #: Trivial state for the client agent.
-    WaitState = State(name='wait', data=None)
-
-    #: Trivial state for the client agent.
     CheckState = State(name='check', data=None)
 
     def __init__(self, index: int) -> None:
@@ -65,15 +62,20 @@ class ClientAgent(Agent):
         '''
         with initializing(self):  # Required to allow modifying this immutable while initializing it.
             self.index = index  # Can add data members which will be immutable from here on.
-        super().__init__(name='client-%s' % index, state=ClientAgent.IdleState)
+        super().__init__(name='client-%s' % index, state=ClientAgent.IdleState, max_in_flight_messages=2)
 
     def _time_when_wait(self, _message: Message) -> Optional[Collection[Action]]:
-        return Agent.IGNORE
+        assert isinstance(self.state.data, int)
+        if self.state.data == 1:
+            request = Message(source_agent_name=self.name, target_agent_name='server', state=State(name='request@', data=self.name))
+            return [Action(name='send_request', next_state=State(name='wait', data=2), send_messages=(request,))]
+        else:
+            return Agent.IGNORE
 
     def _time_when_idle(self, _message: Message) -> Optional[Collection[Action]]:
-        request = Message(source_agent_name=self.name, target_agent_name='server', state=State(name='request', data=self.name))
+        request = Message(source_agent_name=self.name, target_agent_name='server', state=State(name='request@', data=self.name))
         check = Message(source_agent_name=self.name, target_agent_name='client', state=State(name='(check)?=>check', data=self.name))
-        return [Action(name='send_request', next_state=ClientAgent.WaitState, send_messages=(request,)),
+        return [Action(name='send_request', next_state=State(name='wait', data=1), send_messages=(request,)),
                 Action(name='check_parent', next_state=ClientAgent.CheckState, send_messages=(check,))]
 
     def is_deferring(self) -> bool:
@@ -85,7 +87,10 @@ class ClientAgent(Agent):
 
     def _response_when_wait(self, message: Message) -> Optional[Collection[Action]]:
         assert message.state.data == self.name
-        return [Action(name='receive_response', next_state=ClientAgent.IdleState, send_messages=())]
+        if self.state.data == 2:
+            return [Action(name='receive_response', next_state=State(name='wait', data=1), send_messages=())]
+        else:
+            return [Action(name='receive_response', next_state=ClientAgent.IdleState, send_messages=())]
 
     def _confirm_when_check(self, message: Message) -> Optional[Collection[Action]]:
         assert message.state.data == self.name
@@ -132,14 +137,14 @@ class PartialServerAgent(Agent):
         '''
         Create a server in the initial (ready) state.
         '''
-        super().__init__(name='server', state=PartialServerAgent.ReadyState, max_in_flight_messages=clients_count)
+        super().__init__(name='server', state=PartialServerAgent.ReadyState, max_in_flight_messages=2 * clients_count)
 
     def _time_when_busy(self, _message: Message) -> Optional[Collection[Action]]:
         assert isinstance(self.state.data, str)
         done_client_name = self.state.data
         response = Message(source_agent_name=self.name,
                            target_agent_name=done_client_name,
-                           state=State(name='response', data=done_client_name))
+                           state=State(name='response@', data=done_client_name))
 
         return [Action(name='done', next_state=PartialServerAgent.ReadyState, send_messages=(response,))]
 

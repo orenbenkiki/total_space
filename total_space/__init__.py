@@ -229,13 +229,45 @@ class Message(Immutable):
         '''
         return '=>' in self.state.name
 
+    def is_ordered(self) -> bool:
+        '''
+        Return whether this message is ordered relative to others between the same two agents.
+        '''
+        return '@' in self.state.name
+
+    def order(self) -> int:
+        '''
+        Return the order of this message relative to others between the same two agents.
+
+        Must only be invoked on ordered messages.
+        '''
+        parts = self.state.name.split('@')
+        assert len(parts) > 1
+        return int(parts[-1])
+
+    @modifier
+    def reorder(self, delta: int) -> None:
+        '''
+        Change the order of the message.
+
+        Must only be invoked on ordered messages.
+        '''
+        parts = self.state.name.split('@')
+        assert len(parts) > 1
+        new_order = int(parts[-1]) + delta
+        assert new_order >= 0
+        parts[-1] = str(new_order)
+        self.state = self.state.with_name('@'.join(parts))
+
     def clean_name(self) -> str:
         '''
-        Return the clean message name (w/o the ``!`` suffix or the ``=>`` prefix).
+        Return the clean message name (w/o the ``!`` or ``@`` suffix, or the ``=>`` prefix).
         '''
         message_name = self.state.name
         if self.is_immediate():
             message_name = message_name[:-1]
+        if self.is_ordered():
+            message_name = message_name.split('@')[0]
         index = message_name.rfind('=>')
         if index >= 0:
             message_name = message_name[index + 2:]
@@ -269,6 +301,10 @@ class Action(Immutable):
             #: taken to be "immediate", that is, it will be the 1st message to
             #: be delivered. Otherwise the message is added to the in-flight
             #: messages and may be delivered at any order.
+            #:
+            #: If the name of a message ends with ``@``, then the message is
+            #: taken to be "ordered", that is, will only be delivered after any
+            #: other ordered message with the same source and target agents.
             #:
             #: If the message contains ``=>`` then it is expected to contain a
             #: regexp before the ``=>`` and the message name following it. If
@@ -552,7 +588,7 @@ class TimeTracking:
         configuration_by_name: Dict[str, Configuration]
     ) -> None:
         #: Assign unique ID to each message.
-        self.message_id_by_times: Dict[Tuple[int, str], int] = {}
+        self.message_id_by_times: Dict[Tuple[int, str], Tuple[int, Message]] = {}
 
         #: The first and last time each message is used.
         self.message_lifetime_by_id: Dict[int, Tuple[int, int, Message]] = {}
@@ -576,7 +612,7 @@ class TimeTracking:
             if message_text in active_messages.keys():
                 raise NotImplementedError('multiple instances of the same message: ' + message_text)
             message_id = len(active_messages)
-            self.message_id_by_times[(0, message_text)] = message_id
+            self.message_id_by_times[(0, message_text)] = (message_id, message)
             active_messages[message_text] = (message, message_id, 0)
 
             key = sorted([message.source_agent_name, message.target_agent_name])
@@ -598,13 +634,30 @@ class TimeTracking:
                     raise NotImplementedError('multiple instances of the same message: ' + message_text)
 
                 active = active_messages.get(message_text)
+
+                if message.is_ordered():
+                    from_count = len([1 for other_message in from_configuration.messages_in_flight
+                                      if other_message.is_ordered()
+                                      and other_message.source_agent_name == message.source_agent_name
+                                      and other_message.target_agent_name == message.target_agent_name])
+                    to_count = len([1 for other_message in to_configuration.messages_in_flight
+                                    if other_message.is_ordered()
+                                    and other_message.source_agent_name == message.source_agent_name
+                                    and other_message.target_agent_name == message.target_agent_name])
+                    if to_count < from_count:
+                        assert to_count == from_count - 1
+                        prev_message = message.reorder(1)
+                        active = active_messages[str(prev_message)]
+
                 if active is None:
-                    active = (message, next_message_id, to_time_counter)
+                    message_id = next_message_id
                     next_message_id += 1
-                message_id = active[1]
+                    active = (message, message_id, to_time_counter)
+                else:
+                    message_id = active[1]
+                    self.message_id_by_times[(mid_time_counter, message_text)] = (message_id, message)
                 to_active_messages[message_text] = active
-                self.message_id_by_times[(mid_time_counter, message_text)] = message_id
-                self.message_id_by_times[(to_time_counter, message_text)] = message_id
+                self.message_id_by_times[(to_time_counter, message_text)] = (message_id, message)
 
                 key = sorted([message.source_agent_name, message.target_agent_name])
                 self.prev_message_nodes[(key[0], key[1], to_time_counter)] = f'message-{message_id}-{to_time_counter}'
@@ -618,21 +671,22 @@ class TimeTracking:
                             and old_message.target_agent_name == message.target_agent_name \
                             and old_message.clean_name() == replaced_name:
                         assert replaced_id is None
-                        replaced_id = self.message_id_by_times[(time_counter - 1,  str(old_message))]
+                        replaced_id = self.message_id_by_times[(time_counter,  str(old_message))][0]
                 assert replaced_id is not None
                 self.replaced_message_id[message_id] = replaced_id
-
-            for message_text, (message, message_id, first_time_counter) in active_messages.items():
-                if message_text not in to_active_messages:
-                    self.message_lifetime_by_id[message_id] = (first_time_counter, time_counter, message)
 
             configuration = to_configuration
             time_counter = to_time_counter
             active_messages = to_active_messages
 
-        for message_text, (message, message_id, first_time_counter) in active_messages.items():
-            if message_text not in to_active_messages:
-                self.message_lifetime_by_id[message_id] = (first_time_counter, time_counter, message)
+        for (time, _text), (message_id, message) in self.message_id_by_times.items():
+            lifetime = self.message_lifetime_by_id.get(message_id)
+            if lifetime is None:
+                lifetime = (time, time, message)
+            else:
+                assert lifetime[1] == time - 1
+                lifetime = (lifetime[0], time, lifetime[2])
+            self.message_lifetime_by_id[message_id] = lifetime
 
 
 class System(Immutable):
@@ -1239,7 +1293,7 @@ def print_message_time_nodes_between(  # pylint: disable=too-many-locals
     file.write('}\n')
 
 
-def print_message_time_nodes(  # pylint: disable=too-many-arguments
+def print_message_time_nodes(  # pylint: disable=too-many-arguments,too-many-branches
     file: 'TextIO',
     message_id: int,
     message: Message,
@@ -1254,11 +1308,15 @@ def print_message_time_nodes(  # pylint: disable=too-many-arguments
 
     if not message.is_replacement():
         for time in range(0, first_time + 1):
-            node = time_tracking.prev_message_nodes.get((key[0], key[1], time))
-            if node is None:
+            node: Optional[str]
+            if time == first_time:
                 node = f'message-{message_id}-{time}'
-                time_tracking.prev_message_nodes[(key[0], key[1], time)] = node
-                file.write(f'"{node}" [ shape=point, label="", style=invis ];\n')
+            else:
+                node = time_tracking.prev_message_nodes.get((key[0], key[1], time))
+                if node is None:
+                    node = f'message-{message_id}-{time}'
+                    time_tracking.prev_message_nodes[(key[0], key[1], time)] = node
+                    file.write(f'"{node}" [ shape=point, label="", style=invis ];\n')
             if time == 0:
                 continue
             prev_node = time_tracking.prev_message_nodes[(key[0], key[1], time - 1)]
@@ -1273,7 +1331,8 @@ def print_message_time_nodes(  # pylint: disable=too-many-arguments
         node = f'message-{message_id}-{time}'
         time_tracking.prev_message_nodes[(key[0], key[1], time)] = node
         if prev_node != '':
-            file.write(f'"{node}" [ shape=box, penwidth=2, width=0, height=0, color=mediumblue ];\n')
+            file.write(f'"{node}" [ shape=box, label="", penwidth=2, width=0, height=0, color=mediumblue ];\n')
+            time_tracking.connected_message_nodes.add((prev_node, node))
             file.write(f'"{prev_node}" -> "{node}" '
                        '[ penwidth=3, color=mediumblue, weight=1000, dir=forward, arrowhead=none ];\n')
         else:
@@ -1350,7 +1409,7 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
         if to_configuration.messages_in_flight != configuration.messages_in_flight:
             for message in new_messages(configuration, to_configuration):
                 if message.source_agent_name == agent_name:
-                    message_id = time_tracking.message_id_by_times[(to_time_counter, str(message))]
+                    message_id = time_tracking.message_id_by_times[(to_time_counter, str(message))][0]
                     last_message_name = message.state.name
                     last_message_node = f'message-{message_id}-{to_time_counter}'
                     file.write(f'"{mid_node}":c -> "{last_message_node}":c '
@@ -1361,7 +1420,7 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
             if message.state.name == 'time':
                 message_node = print_time_message_node(file, message, time_counter)
             else:
-                message_id = time_tracking.message_id_by_times[(time_counter, str(message))]
+                message_id = time_tracking.message_id_by_times[(time_counter, str(message))][0]
                 message_node = f'message-{message_id}-{time_counter}'
             if did_message:
                 arrowhead = 'none'
@@ -1559,7 +1618,8 @@ class Model:  # pylint: disable=too-many-instance-attributes
             self.deliver_message(configuration, Message.time(agent))
 
         for message_index, message in enumerate(configuration.messages_in_flight):
-            self.deliver_message(configuration, message, message_index)
+            if not message.is_ordered() or message.order() == 0:
+                self.deliver_message(configuration, message, message_index)
 
     def deliver_message(
         self,
@@ -1619,6 +1679,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
                 reasons = new_agent.validate()
             invalids = [Invalid(kind='agent', name=agent.name, reason=reason) for reason in reasons]
 
+        send_messages = []
         for sent_message in action.send_messages:
             if sent_message.source_agent_name != agent.name:
                 raise RuntimeError(f'message {sent_message} pretends to be from {sent_message.source_agent_name} but is from {agent}')
@@ -1626,13 +1687,25 @@ class Model:  # pylint: disable=too-many-instance-attributes
                 raise RuntimeError(f'time message {sent_message} is sent from an agent {agent}')
             if sent_message.target_agent_name not in self.agent_indices:
                 raise RuntimeError(f'message {sent_message} is sent to unknown {sent_message.target_agent_name} from {agent}')
+
+            if sent_message.state.name[-1] == '@':
+                max_prev = -1
+                for prev_message in configuration.messages_in_flight:
+                    if prev_message.is_ordered() \
+                            and prev_message.source_agent_name == sent_message.source_agent_name \
+                            and prev_message.target_agent_name == sent_message.target_agent_name:
+                        max_prev = max(prev_message.order(), max_prev)
+                sent_message = sent_message.with_name(f'{sent_message.state.name}{max_prev + 1}')
+
             reasons = sent_message.state.validate()
             if len(reasons) == 0:
                 reasons = sent_message.validate()
             for reason in reasons:
                 invalids.append(Invalid(kind='message', name=sent_message.state.name, reason=reason))
 
-        self.new_transition(configuration, new_agent, agent_index, message, message_index, invalids, action.send_messages)
+            send_messages.append(sent_message)
+
+        self.new_transition(configuration, new_agent, agent_index, message, message_index, invalids, send_messages)
 
     def missing_handler(
         self,
@@ -1679,6 +1752,15 @@ class Model:  # pylint: disable=too-many-instance-attributes
             new_messages_in_flight = from_configuration.messages_in_flight
         else:
             new_messages_in_flight = tuple_remove(from_configuration.messages_in_flight, message_index)
+            if message.is_ordered():
+                assert message.order() == 0
+                new_messages_in_flight = tuple([other_message.reorder(-1)
+                                                if other_message.is_ordered()
+                                                and other_message.source_agent_name == message.source_agent_name
+                                                and other_message.target_agent_name == message.target_agent_name
+                                                else other_message
+                                                for other_message
+                                                in new_messages_in_flight])
 
         new_send_messages = []
         for send_message in send_messages:

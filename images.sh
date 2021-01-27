@@ -53,7 +53,7 @@ $PYTHON3 -m total_space.simple_model -n -f server -i -I space -m -M -l 'Invalid 
 $PYTHON3 -m total_space.simple_model -n -f client-1 -i -P space -m -M -l 'Partial Client-1 Detail' \
 | dot -Tpng > images/partial.client-1.png
 
-$PYTHON3 -m total_space.simple_model -C 1 time -l 'Client-Server' -c INIT -c 'client-0 @ wait' -c 'client-0 @ idle' \
+$PYTHON3 -m total_space.simple_model -C 1 time -l 'Client-Server' -c INIT -c 'client-0 @ wait / 2' -c 'client-0 @ idle' \
 | dot -Tpng > images/time.client-server.png
 
 $PYTHON3 -m total_space.simple_model -i -I time -l 'Invalid' -c INIT -c ' ! ' \
