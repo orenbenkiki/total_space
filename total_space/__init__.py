@@ -21,6 +21,7 @@ Investigate the total state space of communicating state machines.
 from argparse import ArgumentParser
 from argparse import Namespace
 from copy import deepcopy
+from queue import Queue
 import re
 import sys
 from contextlib import contextmanager
@@ -742,12 +743,13 @@ class System(Immutable):
         validate: Optional[Validation] = None,
         allow_invalid: bool = False,
         debug: bool = False,
+        patterns: Optional[List[re.Pattern]] = None,
     ) -> 'System':
         '''
         Compute the total state space of a system given some agents in their
         initial state.
         '''
-        model = Model(agents, validate, allow_invalid=allow_invalid, debug=debug)
+        model = Model(agents, validate, allow_invalid=allow_invalid, debug=debug, patterns=patterns)
         return System(initial_configuration=model.initial_configuration,
                       configurations=tuple(sorted(model.configurations.values())),
                       transitions=tuple(sorted(model.transitions)))
@@ -831,7 +833,7 @@ class System(Immutable):
             file.write(configuration.name)
             file.write('\n')
 
-    def print_transitions(self, file: 'TextIO', patterns: List[str], sent_messages: bool) -> None:
+    def print_transitions(self, file: 'TextIO', patterns: List[re.Pattern], sent_messages: bool) -> None:
         '''
         Print a list of all the transitions between system configurations to a
         tab-separated file.
@@ -883,14 +885,14 @@ class System(Immutable):
             file.write(to_configuration_name)
             file.write('\n')
 
-    def transitions_path(self, patterns: List[str]) -> List[Transition]:
+    def transitions_path(self, patterns: List[re.Pattern]) -> List[Transition]:
         '''
         Return the path of transitions between configurations matching the
         patterns.
         '''
         assert len(patterns) > 1
 
-        skip_transitions = patterns[0] != 'INIT'
+        skip_transitions = patterns[0] != _INIT_PATTERN
         if not skip_transitions:
             patterns = patterns[1:]
 
@@ -918,7 +920,7 @@ class System(Immutable):
     def shortest_path(
         self,
         from_configuration_name: str,
-        to_pattern: str,
+        to_pattern: re.Pattern,
         outgoing_transitions: Dict[str, List[Transition]],
         transitions: List[Transition]
     ) -> None:
@@ -936,7 +938,7 @@ class System(Immutable):
             if configuration_name not in visited_configuration_names:
                 visited_configuration_names.add(configuration_name)
 
-                for transition in outgoing_transitions[configuration_name]:
+                for transition in outgoing_transitions.get(configuration_name, []):
                     far_transitions = near_transitions + [transition]
                     if transition.to_configuration_name in to_configuration_names:
                         transitions.extend(far_transitions)
@@ -951,18 +953,14 @@ class System(Immutable):
         raise RuntimeError(f'there is no path from the configuration: {from_configuration_name} '
                            f'to a configuration matching the pattern: {to_pattern}')
 
-    def matching_configuration_names(self, pattern: str) -> List[str]:
+    def matching_configuration_names(self, pattern: re.Pattern) -> List[str]:
         '''
         Return all the names of the configurations that match a pattern.
         '''
-        if pattern == 'INIT':
+        if pattern == _INIT_PATTERN:
             return [self.initial_configuration.name]
-        try:
-            regexp = re.compile(pattern)
-        except BaseException:
-            raise ValueError(f'invalid regexp pattern: {pattern}')  # pylint: disable=raise-missing-from
 
-        configuration_names = [configuration.name for configuration in self.configurations if regexp.search(configuration.name)]
+        configuration_names = [configuration.name for configuration in self.configurations if pattern.search(configuration.name)]
         if len(configuration_names) == 0:
             raise ValueError(f'the regexp pattern: {pattern} does not match any configurations')
 
@@ -1152,7 +1150,7 @@ class System(Immutable):
                     file.write(edge)
                     message_edges.add(edge)
 
-    def print_time(self, file: 'TextIO', label: str, patterns: List[str]) -> None:  # pylint: disable=too-many-locals
+    def print_time(self, file: 'TextIO', label: str, patterns: List[re.Pattern]) -> None:  # pylint: disable=too-many-locals
         '''
         Print a ``dot`` file visualizing the interaction between agents along
         the specified path.
@@ -1538,6 +1536,7 @@ def print_agent_state_node(
         file.write(f'"{node}" [ shape=box, label="", penwidth={penwidth}, width=0, height=0, color={color} ];\n')
     return node
 
+_INIT_PATTERN = re.compile('INIT')
 
 class Model:  # pylint: disable=too-many-instance-attributes
     '''
@@ -1551,6 +1550,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
         *,
         allow_invalid: bool = False,
         debug: bool = False,
+        patterns: Optional[List[re.Pattern]] = None,
     ) -> None:
         #: How to validate configurations.
         self.validate = validate
@@ -1560,6 +1560,17 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         #: Whether to print every created configuration to stderr for debugging.
         self.debug = debug
+
+        if patterns is not None and len(patterns) == 2 and patterns[0] == re.compile('INIT'):
+            pattern: Optional[pattern] = patterns[1]
+        else:
+            pattern = None
+
+        #: The pattern of the configuration we are looking for.
+        self.pattern = pattern
+
+        #: Whether to abort building the model since we found the configuration we are looking for.
+        self.abort = False
 
         agents = tuple(sorted(agents))
 
@@ -1581,6 +1592,9 @@ class Model:  # pylint: disable=too-many-instance-attributes
         #: The initial configuration.
         self.initial_configuration = self.validated_configuration(Configuration(agents=agents))
 
+        #: The furthest configuration we have reached so far along the specified patterns path.
+        self.reachable_configuration_name = self.initial_configuration.name
+
         #: All the transitions between configurations.
         self.transitions: List[Transition] = []
 
@@ -1591,10 +1605,11 @@ class Model:  # pylint: disable=too-many-instance-attributes
             return
 
         #: The names of all the configurations we didn't fully model yet.
-        self.pending_configuration_names = [self.initial_configuration.name]
+        self.pending_configuration_names: Queue[str] = Queue()
+        self.pending_configuration_names.put(self.initial_configuration.name)
 
-        while len(self.pending_configuration_names) > 0:
-            self.explore_configuration(self.pending_configuration_names.pop())
+        while not self.abort and not self.pending_configuration_names.empty():
+            self.explore_configuration(self.pending_configuration_names.get())
 
     @staticmethod
     def family_of_agents(
@@ -1840,11 +1855,26 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         self.configurations[to_configuration.name] = to_configuration
 
+        if self.pattern is not None and self.pattern.search(to_configuration.name):
+            self.abort = True
+
         if to_configuration.valid:
-            self.pending_configuration_names.append(to_configuration.name)
+            self.pending_configuration_names.put(to_configuration.name)
             if self.debug:
                 sys.stderr.write(f'{to_configuration.name}\n')
-                sys.stderr.write(f'TODOX known: {len(self.configurations)} pending: {len(self.pending_configuration_names)}\n')
+
+    def is_reachable(self, from_configuration_name: str, to_configuration_name: str) -> bool:
+        '''
+        Test whether we have transitions between two configurations.
+
+        When implemented, this will replace the path searching in the
+        ``System`` class.
+        '''
+        sys.stderr.write(f'from {from_configuration_name}\n')
+        sys.stderr.write(f'to {to_configuration_name}\n')
+        if from_configuration_name == self.initial_configuration.name:
+            return True
+        raise NotImplementedError('path that does not start in the INIT phase')
 
     def validated_configuration(self, configuration: Configuration) -> Configuration:
         '''
@@ -2015,7 +2045,12 @@ def main(
     args = parser.parse_args(sys.argv[1:])
     if 'function' not in args:
         raise RuntimeError('no command specified; run with --help for a list of commands')
-    system = System.compute(agents=model(args), validate=validate, allow_invalid=args.invalid, debug=args.debug)
+    if 'configuration' in args:
+        args.patterns = [re.compile(pattern) for pattern in args.configuration]
+    else:
+        args.patterns = None
+    system = System.compute(agents=model(args), validate=validate, allow_invalid=args.invalid,
+                            debug=args.debug, patterns=args.patterns)
     if len(args.focus) > 0:
         system = system.focus_on_agents(args.focus)
     if args.names:
@@ -2044,9 +2079,9 @@ def transitions_command(args: Namespace, file: 'TextIO', system: System) -> None
     '''
     Implement the ``transitions`` command.
     '''
-    if len(args.configuration) == 1:
+    if len(args.patterns) == 1:
         raise ValueError('configurations path must contain at least two patterns')
-    system.print_transitions(file, args.configuration, args.messages)
+    system.print_transitions(file, args.patterns, args.messages)
 
 
 def space_command(args: Namespace, file: 'TextIO', system: System) -> None:
@@ -2061,9 +2096,9 @@ def time_command(args: Namespace, file: 'TextIO', system: System) -> None:
     '''
     Implement the ``time`` command.
     '''
-    if len(args.configuration) < 2:
+    if len(args.patterns) < 2:
         raise ValueError('configurations path must contain at least two patterns')
-    system.print_time(file, args.label, args.configuration)
+    system.print_time(file, args.label, args.patterns)
 
 
 @contextmanager
