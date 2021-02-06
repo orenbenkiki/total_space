@@ -71,20 +71,20 @@ tab-separated file using ``transitions`` instead. These are also useful for furt
 processing. However these aren't very useful in communicating the model's logic to humans.
 
 To generate diagrams for visualizing the total space of states, you can run ``python3 -m
-total_space.simple_model space | dot -Tpng > complete.png``. This will generate a large, detailed,
-but `complete <images/complete.png?raw=true>`_ diagram, which might still be useful when debugging
-complex paths to debug `partial <images/partial.png?raw=true>`_ or `invalid
-<images/invalid.png?raw=true>`_ models.
+total_space.simple_model space | dot -Tsvg > complete.svg``. This will generate a large, detailed,
+but `complete <images/complete.svg?raw=true>`_ diagram, which might still be useful when debugging
+complex paths to debug `partial <images/partial.svg?raw=true>`_ or `invalid
+<images/invalid.svg?raw=true>`_ models.
 
 It is possible to use ``--focus AGENT`` (possibly several times) to ignore agents which are not in
 the focus. For example, using ``--focus client-1`` focuses on a single `client
-<images/focus.client-1.png?raw=true>`_, which works pretty well. We also get a pretty reasonable
-diagram focusing on the `server <images/focus.server.1.png?raw=true>`_ for a single-client system;
-less so for `two clients <images/focus.server.2.png?raw=true>`_.
+<images/focus.client-1.svg?raw=true>`_, which works pretty well. We also get a pretty reasonable
+diagram focusing on the `server <images/focus.server.1.svg?raw=true>`_ for a single-client system;
+less so for `two clients <images/focus.server.2.svg?raw=true>`_.
 
 To generate more legible diagrams, it is possible to merge total system configuration states by
 using ``--names`` to ignore the internal state data and/or using ``--agents`` to ignore the
-messages-in-flight. Doing both gives a simpler `agents <images/agents.png?raw=true>`_ diagram, at the cost of
+messages-in-flight. Doing both gives a simpler `agents <images/agents.svg?raw=true>`_ diagram, at the cost of
 leaving out the messages passed between the agents and the details of their internal state.
 
 All the above options simply rename and merge otherwise-different system configuration states. Note
@@ -101,24 +101,24 @@ of in-flight messages. This is different from ``--agents`` above since here we k
 between the states, and only merge them to a single node at the last moment.
 
 For example, clustering by server state (``--focus server space --cluster server``) will `help
-<images/cluster.server.png?raw=true>`_ somewhat when focusing on the server in a two-client system -
+<images/cluster.server.svg?raw=true>`_ somewhat when focusing on the server in a two-client system -
 in particular, we can see that the server can stay indefinitely in the "busy" state if the clients
 keep hammering it with requests. We also get good results using ``--names space --messages --merge``
-at least for `one client <images/detail.1.png?raw=true>`_, if less so for `two clients
-<images/detail.2.png?raw=true>`_.
+at least for `one client <images/detail.1.svg?raw=true>`_, if less so for `two clients
+<images/detail.2.svg?raw=true>`_.
 
 This combination works better using ``--names --focus client-1 space --messages --merge`` to focus on
-a `client <images/detail.client-1.png?raw=true>`_, and likewise for the server, where there is a
-minimal impact from the existence of `two clients <images/detail.server.2.png?raw=true>`_ compared
-to a `single client <images/detail.server.1.png?raw=true>`_. It also works pretty well demonstrating
-the issue with a `partial <images/partial.server.png?raw=true>`_ or an `invalid
-<images/invalid.server.png?raw=true>`_ model, at least as long as the focus is on the correct agent;
-otherwise, the `result <images/partial.client-1.png?raw=true>`_ doesn't show the issue at all.
+a `client <images/detail.client-1.svg?raw=true>`_, and likewise for the server, where there is a
+minimal impact from the existence of `two clients <images/detail.server.2.svg?raw=true>`_ compared
+to a `single client <images/detail.server.1.svg?raw=true>`_. It also works pretty well demonstrating
+the issue with a `partial <images/partial.server.svg?raw=true>`_ or an `invalid
+<images/invalid.server.svg?raw=true>`_ model, at least as long as the focus is on the correct agent;
+otherwise, the `result <images/partial.client-1.svg?raw=true>`_ doesn't show the issue at all.
 
 It is also possible to generate interaction diagrams showing the exchange of messages between agents
 along a specific scenario using the ``time`` command. For example, we can show the `client-server
-<images/time.client-server.png?raw=true>`_ interaction. This is especially useful when investigating
-the scenario leading to an `invalid <images/time.invalid.png?raw=true>`_ state.
+<images/time.client-server.svg?raw=true>`_ interaction. This is especially useful when investigating
+the scenario leading to an `invalid <images/time.invalid.svg?raw=true>`_ state.
 
 The bottom line is, YMMV. Choosing the right combination of restrictions to highlight specific parts
 of the logic depends very much both on the model and on what you are trying to achieve in the
