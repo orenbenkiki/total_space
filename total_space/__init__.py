@@ -52,7 +52,7 @@ __all__ = [
 ]
 
 
-T = TypeVar('T')
+T = TypeVar('T')  # pylint: disable=invalid-name
 
 class Memoize:
     '''
@@ -62,6 +62,11 @@ class Memoize:
 
     @staticmethod
     def memoize(obj: T) -> T:
+        '''
+        Return the memoized version of the object.
+
+        This relies in ``str`` containing a full description of the object.
+        '''
         name = str(obj)
         memoized = Memoize.by_name.get(name, obj)
         if memoized is None:
@@ -826,13 +831,13 @@ class System(Immutable):
             file.write(configuration.name)
             file.write('\n')
 
-    def print_transitions(self, file: 'TextIO', path: List[str], sent_messages: bool) -> None:
+    def print_transitions(self, file: 'TextIO', patterns: List[str], sent_messages: bool) -> None:
         '''
         Print a list of all the transitions between system configurations to a
         tab-separated file.
         '''
-        if len(path) > 0:
-            transitions: Collection[Transition] = self.transitions_path(path)
+        if len(patterns) > 0:
+            transitions: Collection[Transition] = self.transitions_path(patterns)
         else:
             transitions = self.transitions
 
@@ -878,18 +883,18 @@ class System(Immutable):
             file.write(to_configuration_name)
             file.write('\n')
 
-    def transitions_path(self, paths: List[str]) -> List[Transition]:
+    def transitions_path(self, patterns: List[str]) -> List[Transition]:
         '''
         Return the path of transitions between configurations matching the
         patterns.
         '''
-        assert len(paths) > 1
+        assert len(patterns) > 1
 
-        initial_configuration_names = self.matching_configuration_names(paths[0])
-        if len(initial_configuration_names) != 1:
-            raise ValueError(f'first regexp pattern: {paths[0]} matches more than one configuration')
+        skip_transitions = patterns[0] != 'INIT'
+        if not skip_transitions:
+            patterns = patterns[1:]
 
-        configuration_name = initial_configuration_names[0]
+        configuration_name = self.initial_configuration.name
 
         outgoing_transitions: Dict[str, List[Transition]] = {}
         for transition in self.transitions:
@@ -899,11 +904,16 @@ class System(Immutable):
             transitions_list.append(transition)
 
         transitions: List[Transition] = []
-        for pattern in paths[1:]:
+        skip_transitions_count = 0
+        for pattern in patterns:
             self.shortest_path(configuration_name, pattern, outgoing_transitions, transitions)
             configuration_name = transitions[-1].to_configuration_name
+            if skip_transitions:
+                skip_transitions = False
+                skip_transitions_count = len(transitions)
 
-        return transitions
+        assert len(transitions) > skip_transitions_count
+        return transitions[skip_transitions_count:]
 
     def shortest_path(
         self,
@@ -1142,12 +1152,12 @@ class System(Immutable):
                     file.write(edge)
                     message_edges.add(edge)
 
-    def print_time(self, file: 'TextIO', label: str, path: List[str]) -> None:  # pylint: disable=too-many-locals
+    def print_time(self, file: 'TextIO', label: str, patterns: List[str]) -> None:  # pylint: disable=too-many-locals
         '''
         Print a ``dot`` file visualizing the interaction between agents along
         the specified path.
         '''
-        transitions = self.transitions_path(path)
+        transitions = self.transitions_path(patterns)
 
         configuration_by_name = {configuration.name: configuration for configuration in self.configurations}
         agent_indices = {agent.name: agent_index for agent_index, agent in enumerate(self.configurations[0].agents)}
@@ -1672,7 +1682,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
         for action in actions:
             self.perform_action(configuration, agent, agent_index, action, message, message_index)
 
-    def perform_action(  # pylint: disable=too-many-arguments
+    def perform_action(  # pylint: disable=too-many-arguments,too-many-branches
         self,
         configuration: Configuration,
         agent: Agent,
@@ -1963,10 +1973,9 @@ def main(
         delivered_message_data, delivered_message_target_agent_name, and
         to_configuration_name.
 
-        By default lists all transitions. If two or more `--configuration PATTERN`
-        flags are specified, generate a list showing the shortest path between the
-        matching configurations. The first pattern must match only a single
-        configuration, to identify a unique starting point for the path.
+        By default lists all transitions. If two or more `--configuration
+        PATTERN` flags are specified, generate a list showing the shortest path
+        between the matching configurations.
     ''')
     transitions_parser.set_defaults(function=transitions_command)
     transitions_parser.add_argument('-m', '--messages', action='store_true',
