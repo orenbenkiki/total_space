@@ -52,6 +52,23 @@ __all__ = [
 ]
 
 
+T = TypeVar('T')
+
+class Memoize:
+    '''
+    Memoize objects to reduce memory usage.
+    '''
+    by_name: Dict[str, Any] = {}
+
+    @staticmethod
+    def memoize(obj: T) -> T:
+        name = str(obj)
+        memoized = Memoize.by_name.get(name, obj)
+        if memoized is None:
+            memoized = Memoize.by_name[name] = obj
+        return memoized
+
+
 @total_ordering
 class Immutable:
     '''
@@ -109,7 +126,7 @@ def modifier(function: Callable) -> Callable:
             that = deepcopy(this)
         with initializing(that):
             function(that, *args, **kwargs)
-        return that
+        return Memoize.memoize(that)
     return _create_modified
 
 
@@ -1696,6 +1713,8 @@ class Model:  # pylint: disable=too-many-instance-attributes
                             and prev_message.target_agent_name == sent_message.target_agent_name:
                         max_prev = max(prev_message.order(), max_prev)
                 sent_message = sent_message.with_name(f'{sent_message.state.name}{max_prev + 1}')
+            else:
+                sent_message = Memoize.memoize(sent_message)
 
             reasons = sent_message.state.validate()
             if len(reasons) == 0:
@@ -1748,6 +1767,8 @@ class Model:  # pylint: disable=too-many-instance-attributes
                 parent_agent = self.agent_with_children(parent_agent, new_agents)
                 new_agents = tuple_replace(new_agents, parent_index, parent_agent)
 
+            new_agents = Memoize.memoize(new_agents)
+
         if message_index is None:
             new_messages_in_flight = from_configuration.messages_in_flight
         else:
@@ -1770,6 +1791,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
                 new_send_messages.append(send_message)
 
         new_messages_in_flight = tuple(sorted(new_messages_in_flight + tuple(new_send_messages)))
+        new_messages_in_flight = Memoize.memoize(new_messages_in_flight)
 
         if agent is not None:
             in_flight_count = len([1 for in_flight_message in new_messages_in_flight
@@ -1786,13 +1808,17 @@ class Model:  # pylint: disable=too-many-instance-attributes
                                    f'when delivering: {message}\n'
                                    f'then {invalid}')
 
+        new_invalids = tuple(sorted(invalids))
+        new_invalids = Memoize.memoize(new_invalids)
+
         to_configuration = self.validated_configuration(Configuration(agents=new_agents,
                                                                       messages_in_flight=new_messages_in_flight,
-                                                                      invalids=tuple(sorted(invalids))))
+                                                                      invalids=new_invalids))
 
         if from_configuration == to_configuration:
             return
 
+        to_configuration = Memoize.memoize(to_configuration)
 
         transition = Transition(from_configuration_name=from_configuration.name,
                                 delivered_message=message,
@@ -1806,9 +1832,9 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         if to_configuration.valid:
             self.pending_configuration_names.append(to_configuration.name)
-
-        if self.debug:
-            sys.stderr.write(f'{to_configuration.name}\n')
+            if self.debug:
+                sys.stderr.write(f'{to_configuration.name}\n')
+                sys.stderr.write(f'TODOX known: {len(self.configurations)} pending: {len(self.pending_configuration_names)}\n')
 
     def validated_configuration(self, configuration: Configuration) -> Configuration:
         '''
