@@ -1562,7 +1562,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
         self.debug = debug
 
         if patterns is not None and len(patterns) == 2 and patterns[0] == re.compile('INIT'):
-            pattern: Optional[pattern] = patterns[1]
+            pattern: Optional['re.Pattern'] = patterns[1]
         else:
             pattern = None
 
