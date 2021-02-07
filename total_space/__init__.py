@@ -743,7 +743,7 @@ class System(Immutable):
         validate: Optional[Validation] = None,
         allow_invalid: bool = False,
         debug: bool = False,
-        patterns: Optional[List[re.Pattern]] = None,
+        patterns: Optional[List['re.Pattern']] = None,
     ) -> 'System':
         '''
         Compute the total state space of a system given some agents in their
@@ -833,7 +833,7 @@ class System(Immutable):
             file.write(configuration.name)
             file.write('\n')
 
-    def print_transitions(self, file: 'TextIO', patterns: List[re.Pattern], sent_messages: bool) -> None:
+    def print_transitions(self, file: 'TextIO', patterns: List['re.Pattern'], sent_messages: bool) -> None:
         '''
         Print a list of all the transitions between system configurations to a
         tab-separated file.
@@ -885,7 +885,7 @@ class System(Immutable):
             file.write(to_configuration_name)
             file.write('\n')
 
-    def transitions_path(self, patterns: List[re.Pattern]) -> List[Transition]:
+    def transitions_path(self, patterns: List['re.Pattern']) -> List[Transition]:
         '''
         Return the path of transitions between configurations matching the
         patterns.
@@ -920,7 +920,7 @@ class System(Immutable):
     def shortest_path(
         self,
         from_configuration_name: str,
-        to_pattern: re.Pattern,
+        to_pattern: 're.Pattern',
         outgoing_transitions: Dict[str, List[Transition]],
         transitions: List[Transition]
     ) -> None:
@@ -953,7 +953,7 @@ class System(Immutable):
         raise RuntimeError(f'there is no path from the configuration: {from_configuration_name} '
                            f'to a configuration matching the pattern: {to_pattern}')
 
-    def matching_configuration_names(self, pattern: re.Pattern) -> List[str]:
+    def matching_configuration_names(self, pattern: 're.Pattern') -> List[str]:
         '''
         Return all the names of the configurations that match a pattern.
         '''
@@ -1150,7 +1150,7 @@ class System(Immutable):
                     file.write(edge)
                     message_edges.add(edge)
 
-    def print_time(self, file: 'TextIO', label: str, patterns: List[re.Pattern]) -> None:  # pylint: disable=too-many-locals
+    def print_time(self, file: 'TextIO', label: str, patterns: List['re.Pattern']) -> None:  # pylint: disable=too-many-locals
         '''
         Print a ``dot`` file visualizing the interaction between agents along
         the specified path.
@@ -1550,7 +1550,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
         *,
         allow_invalid: bool = False,
         debug: bool = False,
-        patterns: Optional[List[re.Pattern]] = None,
+        patterns: Optional[List['re.Pattern']] = None,
     ) -> None:
         #: How to validate configurations.
         self.validate = validate
