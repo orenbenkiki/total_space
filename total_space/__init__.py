@@ -347,22 +347,22 @@ class Agent(Immutable):
 
     Each agent is a non-deterministic state machine.
 
-    Sub-classes should implement handler methods with the name
-    ``_<message_name>_when_<state_name>``, which are invoked when the has a
-    :py:const:`State` with ``state_name``, and receives a :py:const:`Message`
-    with the name ``message_name``.
+    Sub-classes should implement handler methods. When a message needs
+    to be delivered to an agent, the code searches for a handler method
+    in the following order:
 
-    If no such method exists, then the code also checks for a handler method
-    with the name ``_<message_name>_when_any`` and then for a handler method
-    with the name ``_any_when_<state_name>``, and finally for an
-    ``_any_when_any`` handler method, in that order.
+    * ``_<message_name>_when_<state_name>``
+    * ``_<message_name>_when_deferring`` (if :py:func:`Agent.is_deferring`)
+    * ``_<message_name>_when_any``
+    * ``_any_when_<state_name>``
+    * ``_any_when_deferring`` (if :py:func:`Agent.is_deferring`)
+    * ``_any_when_any``
 
-    If such catch-all handler methods are implemented, it is recommended that
-    their first statement will check that the state (for ``_when_any``) or the
-    message (for ``_any_when``), or both (for ``_any_when_any``) are in a list
+    If catch-all handler methods are implemented, it is recommended that their
+    first statement will check that the state and/or the message are in a list
     of expected values, and otherwise return :py:attr:`Agent.UNEXPECTED`. This
     will ensure that adding new states and/or messages will not be
-    unintentionally handled by such catch-all handler methods.
+    unintentionally handled by the catch-all handler method.
 
     Handler methods should have a single parameter for the message, and return
     either `:py:attr:`Agent.UNEXPECTED` (``None``) or a ``Collection`` of
@@ -413,7 +413,7 @@ class Agent(Immutable):
     def __init__(self, *, name: str, state: State,
                  max_in_flight_messages: int = 1,
                  children: Optional[Dict[str, State]] = None) -> None:
-        if state.name in ('time', 'any'):
+        if state.name in ('time', 'any', 'deferring'):
             raise RuntimeError(f'setting the forbidden-named state: {state}\n'
                                f'for the agent: {name}')
         with initializing(self):
@@ -1698,10 +1698,14 @@ class Model:  # pylint: disable=too-many-instance-attributes
         actions: Optional[Collection[Action]] = None
 
         handler = getattr(agent, f'_{message.clean_name()}_when_{agent.state.name}', None)
+        if handler is None and is_deferring:
+            handler = getattr(agent, f'_{message.clean_name()}_when_deferring', None)
         if handler is None:
             handler = getattr(agent, f'_{message.clean_name()}_when_any', None)
         if handler is None:
             handler = getattr(agent, f'_any_when_{agent.state.name}', None)
+        if handler is None and is_deferring:
+            handler = getattr(agent, '_any_when_deferring', None)
         if handler is None:
             handler = getattr(agent, '_any_when_any', None)
 
@@ -1748,7 +1752,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         send_messages = []
         for sent_message in action.send_messages:
-            if sent_message.clean_name() in ('time', 'any'):
+            if sent_message.clean_name() in ('time', 'any', 'deferring'):
                 raise RuntimeError(f'the forbidden-named message: {sent_message}\n'
                                    f'is sent from the agent: {agent}')
             if sent_message.source_agent_name != agent.name:
