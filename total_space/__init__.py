@@ -91,7 +91,8 @@ class Immutable:
         if Immutable._initializing == id(self) or Immutable._initializing == -1:
             object.__setattr__(self, name, value)
         else:
-            raise RuntimeError(f'trying to modify the property: {name} of an immutable: {self.__class__.__qualname__}')
+            raise RuntimeError(f'trying to modify the property: {name}\n'
+                               f'of an immutable: {self.__class__.__qualname__}')
 
     def __eq__(self, other) -> bool:
         return str(self) == str(other)
@@ -346,16 +347,29 @@ class Agent(Immutable):
 
     Each agent is a non-deterministic state machine.
 
-    Sub-classes should implement methods with the name
+    Sub-classes should implement handler methods with the name
     ``_<message_name>_when_<state_name>``, which are invoked when the has a
     :py:const:`State` with ``state_name``, and receives a :py:const:`Message`
     with the name ``message_name``.
 
-    Each such method should have a single parameter for the message, and return
-    either ``None`` or a ``Collection`` of possible :py:const:`Action`, any one
-    of which may be taken when receiving the message while at the current
-    state. Providing multiple alternatives allows modeling a non-deterministic
-    agent (e.g., modeling either a hit or a miss in a cache).
+    If no such method exists, then the code also checks for a handler method
+    with the name ``_<message_name>_when_any`` and then for a handler method
+    with the name ``_any_when_<state_name>``, and finally for an
+    ``_any_when_any`` handler method, in that order.
+
+    If such catch-all handler methods are implemented, it is recommended that
+    their first statement will check that the state (for ``_when_any``) or the
+    message (for ``_any_when``), or both (for ``_any_when_any``) are in a list
+    of expected values, and otherwise return :py:attr:`Agent.UNEXPECTED`. This
+    will ensure that adding new states and/or messages will not be
+    unintentionally handled by such catch-all handler methods.
+
+    Handler methods should have a single parameter for the message, and return
+    either `:py:attr:`Agent.UNEXPECTED` (``None``) or a ``Collection`` of
+    possible :py:const:`Action`, any one of which may be taken when receiving
+    the message while at the current state. Providing multiple alternatives
+    allows modeling a non-deterministic agent (e.g., modeling either a hit or a
+    miss in a cache).
 
     If the method returns :py:attr:`Agent.IGNORE`, then the agent silently
     ignores the message without changing its state. This is a convenient
@@ -399,6 +413,9 @@ class Agent(Immutable):
     def __init__(self, *, name: str, state: State,
                  max_in_flight_messages: int = 1,
                  children: Optional[Dict[str, State]] = None) -> None:
+        if state.name in ('time', 'any'):
+            raise RuntimeError(f'setting the forbidden-named state: {state}\n'
+                               f'for the agent: {name}')
         with initializing(self):
             #: The name of the agent for visualization.
             self.name = name
@@ -633,7 +650,7 @@ class TimeTracking:
         for message in configuration.messages_in_flight:
             message_text = str(message)
             if message_text in active_messages.keys():
-                raise NotImplementedError('multiple instances of the same message: ' + message_text)
+                raise NotImplementedError('multiple in-flight instances of the same message: ' + message_text)
             message_id = len(active_messages)
             self.message_id_by_times[(0, message_text)] = (message_id, message)
             active_messages[message_text] = (message, message_id, 0)
@@ -654,7 +671,7 @@ class TimeTracking:
             for message in to_configuration.messages_in_flight:
                 message_text = str(message)
                 if message_text in to_active_messages:
-                    raise NotImplementedError('multiple instances of the same message: ' + message_text)
+                    raise NotImplementedError('multiple in-flight instances of the same message: ' + message_text)
 
                 active = active_messages.get(message_text)
 
@@ -950,7 +967,7 @@ class System(Immutable):
                 near_pending = far_pending
                 far_pending = []
 
-        raise RuntimeError(f'there is no path from the configuration: {from_configuration_name} '
+        raise RuntimeError(f'there is no path from the configuration: {from_configuration_name}\n'
                            f'to a configuration matching the pattern: {to_pattern}')
 
     def matching_configuration_names(self, pattern: 're.Pattern') -> List[str]:
@@ -962,7 +979,8 @@ class System(Immutable):
 
         configuration_names = [configuration.name for configuration in self.configurations if pattern.search(configuration.name)]
         if len(configuration_names) == 0:
-            raise ValueError(f'the regexp pattern: {pattern} does not match any configurations')
+            raise ValueError(f'the regexp pattern: {pattern}\n'
+                             f'does not match any configurations')
 
         return configuration_names
 
@@ -1680,6 +1698,13 @@ class Model:  # pylint: disable=too-many-instance-attributes
         actions: Optional[Collection[Action]] = None
 
         handler = getattr(agent, f'_{message.clean_name()}_when_{agent.state.name}', None)
+        if handler is None:
+            handler = getattr(agent, f'_{message.clean_name()}_when_any', None)
+        if handler is None:
+            handler = getattr(agent, f'_any_when_{agent.state.name}', None)
+        if handler is None:
+            handler = getattr(agent, '_any_when_any', None)
+
         if handler is not None:
             actions = handler(message)
         elif is_deferring:
@@ -1690,9 +1715,9 @@ class Model:  # pylint: disable=too-many-instance-attributes
             return
 
         if len(actions) == 0 and not is_deferring:
-            raise RuntimeError(f'agent: {agent.name} '
-                               f'in non-deferring state: {agent.state.name} '
-                               f'defers message: {message.state.name}')
+            raise RuntimeError(f'an agent: {agent.name}\n'
+                               f'in the non-deferring state: {agent.state.name}\n'
+                               f'defers the message: {message.state.name}')
 
         for action in actions:
             self.perform_action(configuration, agent, agent_index, action, message, message_index)
@@ -1723,12 +1748,17 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         send_messages = []
         for sent_message in action.send_messages:
+            if sent_message.clean_name() in ('time', 'any'):
+                raise RuntimeError(f'the forbidden-named message: {sent_message}\n'
+                                   f'is sent from the agent: {agent}')
             if sent_message.source_agent_name != agent.name:
-                raise RuntimeError(f'message {sent_message} pretends to be from {sent_message.source_agent_name} but is from {agent}')
-            if sent_message.clean_name() == 'time':
-                raise RuntimeError(f'time message {sent_message} is sent from an agent {agent}')
+                raise RuntimeError(f'the message: {sent_message}\n'
+                                   f'pretends to be from: {sent_message.source_agent_name}\n'
+                                   f'but is from: {agent}')
             if sent_message.target_agent_name not in self.agent_indices:
-                raise RuntimeError(f'message {sent_message} is sent to unknown {sent_message.target_agent_name} from {agent}')
+                raise RuntimeError(f'the message: {sent_message}\n'
+                                   f'is sent to the unknown: {sent_message.target_agent_name}\n'
+                                   f'from: {agent}')
 
             if sent_message.state.name[-1] == '@':
                 max_prev = -1
@@ -2044,7 +2074,8 @@ def main(
 
     args = parser.parse_args(sys.argv[1:])
     if 'function' not in args:
-        raise RuntimeError('no command specified; run with --help for a list of commands')
+        raise RuntimeError('no command specified\n'
+                           'run with --help for a list of commands')
     if 'configuration' in args:
         args.patterns = [re.compile(pattern) for pattern in args.configuration]
     else:
