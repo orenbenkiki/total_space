@@ -1741,14 +1741,15 @@ class Model:  # pylint: disable=too-many-instance-attributes
         '''
         if action.next_state is None:
             new_agent: Optional[Agent] = None
-            invalids: List[Invalid] = []
+            invalids_data: List[Tuple[Invalid, str]] = []
         else:
             new_agent = agent.with_state(action.next_state)
             assert isinstance(new_agent, Agent)
             reasons = new_agent.state.validate()
             if len(reasons) == 0:
                 reasons = new_agent.validate()
-            invalids = [Invalid(kind='agent', name=agent.name, reason=reason) for reason in reasons]
+            invalids_data = [(Invalid(kind='agent', name=agent.name, reason=reason), '')
+                             for reason in reasons]
 
         send_messages = []
         for sent_message in action.send_messages:
@@ -1779,11 +1780,11 @@ class Model:  # pylint: disable=too-many-instance-attributes
             if len(reasons) == 0:
                 reasons = sent_message.validate()
             for reason in reasons:
-                invalids.append(Invalid(kind='message', name=sent_message.state.name, reason=reason))
+                invalids_data.append((Invalid(kind='message', name=sent_message.state.name, reason=reason), ''))
 
             send_messages.append(sent_message)
 
-        self.new_transition(configuration, new_agent, agent_index, message, message_index, invalids, send_messages)
+        self.new_transition(configuration, new_agent, agent_index, message, message_index, invalids_data, send_messages)
 
     def missing_handler(
         self,
@@ -1798,7 +1799,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
         reason = f'missing handler for message: {message.state} when in state: {agent.state}'
         invalid = Invalid(kind='agent', name=agent.name, reason=reason)
 
-        self.new_transition(configuration, None, None, message, message_index, [invalid])
+        self.new_transition(configuration, None, None, message, message_index, [(invalid, '')])
 
     def new_transition(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
         self,
@@ -1807,7 +1808,7 @@ class Model:  # pylint: disable=too-many-instance-attributes
         agent_index: Optional[int],
         message: Message,
         message_index: Optional[int],
-        invalids: List[Invalid],
+        invalids_data: List[Tuple[Invalid, str]],
         send_messages: Collection[Message] = ()
     ) -> None:
         '''
@@ -1853,21 +1854,25 @@ class Model:  # pylint: disable=too-many-instance-attributes
         new_messages_in_flight = Memoize.memoize(new_messages_in_flight)
 
         if agent is not None:
-            in_flight_count = len([1 for in_flight_message in new_messages_in_flight
-                                   if in_flight_message.source_agent_name == agent.name])
+            counted_messages = [in_flight_message for in_flight_message in new_messages_in_flight
+                                if in_flight_message.source_agent_name == agent.name]
+            in_flight_count = len(counted_messages)
 
             if in_flight_count > agent.max_in_flight_messages:
                 reason = f'sending {in_flight_count} which is more than ' \
                          f'the maximal allowed {agent.max_in_flight_messages} messages'
-                invalids.append(Invalid(kind='agent', name=agent.name, reason=reason))
+                suffix = '\nmessages:\n- ' \
+                    + '\n- '.join([str(counted_message) for counted_message in counted_messages])
+                invalids_data.append((Invalid(kind='agent', name=agent.name, reason=reason), suffix))
 
-        for invalid in invalids:
+        for invalid, suffix in invalids_data:
             if not self.allow_invalid:
                 raise RuntimeError(f'in configuration: {from_configuration}\n'
                                    f'when delivering: {message}\n'
-                                   f'then {invalid}')
+                                   f'then {invalid}'
+                                   f'{suffix}')
 
-        new_invalids = tuple(sorted(invalids))
+        new_invalids = tuple(sorted([invalid for invalid, _suffix in invalids_data]))
         new_invalids = Memoize.memoize(new_invalids)
 
         to_configuration = self.validated_configuration(Configuration(agents=new_agents,
@@ -1933,6 +1938,7 @@ def replace_message(messages_in_flight: Collection[Message], message: Message) -
     '''
     Replace an existing message with a new one if requested.
     '''
+    original_message = message
     index = message.state.name.index('=>')
     pattern = re.compile(message.state.name[:index])
     message_name = message.state.name[index + 2:]
@@ -1951,7 +1957,7 @@ def replace_message(messages_in_flight: Collection[Message], message: Message) -
             message = message.with_name(message_name)
             new_messages_in_flight.append(message)
             continue
-        raise RuntimeError(f'the replacement message: {message}\n'
+        raise RuntimeError(f'the replacement message: {original_message}\n'
                            f'can replace either the in-flight message: {replaced_message}\n'
                            f'or the in-flight-message: {message_in_flight}')
 
