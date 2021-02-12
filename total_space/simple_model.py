@@ -74,7 +74,7 @@ class ClientAgent(Agent):
 
     def _time_when_idle(self, _message: Message) -> Optional[Collection[Action]]:
         request = Message(source_agent_name=self.name, target_agent_name='server', state=State(name='request@', data=self.name))
-        check = Message(source_agent_name=self.name, target_agent_name='client', state=State(name='(check)?=>check', data=self.name))
+        check = Message(source_agent_name=self.name, target_agent_name='client', state=State(name='none|check=>check', data=self.name))
         return [Action(name='send_request', next_state=State(name='wait', data=1), send_messages=(request,)),
                 Action(name='check_parent', next_state=ClientAgent.CheckState, send_messages=(check,))]
 
@@ -82,7 +82,7 @@ class ClientAgent(Agent):
         return self.state.name == 'check'
 
     def _time_when_check(self, _message: Message) -> Optional[Collection[Action]]:
-        recheck = Message(source_agent_name=self.name, target_agent_name='client', state=State(name='(check)?=>check', data=self.name))
+        recheck = Message(source_agent_name=self.name, target_agent_name='client', state=State(name='none|check=>check', data=self.name))
         return [Action(name='recheck', next_state=None, send_messages=(recheck,))]
 
     def _response_when_wait(self, message: Message) -> Optional[Collection[Action]]:

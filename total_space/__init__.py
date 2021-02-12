@@ -38,6 +38,7 @@ __version__ = '0.2.7'
 
 
 __all__ = [
+    'RESERVED_NAMES',
     'Immutable',
     'initializing',
     'State',
@@ -52,6 +53,9 @@ __all__ = [
     'main',
 ]
 
+
+#: Do not use these as a name.
+RESERVED_NAMES = ('init', 'time', 'any', 'deferring', 'none')
 
 T = TypeVar('T')  # pylint: disable=invalid-name
 
@@ -413,8 +417,8 @@ class Agent(Immutable):
     def __init__(self, *, name: str, state: State,
                  max_in_flight_messages: int = 1,
                  children: Optional[Dict[str, State]] = None) -> None:
-        if state.name in ('time', 'any', 'deferring'):
-            raise RuntimeError(f'setting the forbidden-named state: {state}\n'
+        if state.name in RESERVED_NAMES:
+            raise RuntimeError(f'setting the reserved-named state: {state}\n'
                                f'for the agent: {name}')
         with initializing(self):
             #: The name of the agent for visualization.
@@ -1753,8 +1757,8 @@ class Model:  # pylint: disable=too-many-instance-attributes
 
         send_messages = []
         for sent_message in action.send_messages:
-            if sent_message.clean_name() in ('time', 'any', 'deferring'):
-                raise RuntimeError(f'the forbidden-named message: {sent_message}\n'
+            if sent_message.clean_name() in RESERVED_NAMES:
+                raise RuntimeError(f'the reserved-named message: {sent_message}\n'
                                    f'is sent from the agent: {agent}')
             if sent_message.source_agent_name != agent.name:
                 raise RuntimeError(f'the message: {sent_message}\n'
@@ -1962,7 +1966,7 @@ def replace_message(messages_in_flight: Collection[Message], message: Message) -
                            f'or the in-flight-message: {message_in_flight}')
 
     if replaced_message is None:
-        if not pattern.match(''):
+        if not pattern.match('none'):
             raise RuntimeError(f'the replacement message: {message}\n'
                                f'did not replace any message')
         message = message.with_name(message_name)
