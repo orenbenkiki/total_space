@@ -1945,7 +1945,7 @@ def replace_message(messages_in_flight: Collection[Message], message: Message) -
     original_message = message
     index = message.state.name.index('=>')
     pattern = re.compile(message.state.name[:index])
-    message_name = message.state.name[index + 2:]
+    message = message.with_name(message.state.name[index + 2:])
 
     new_messages_in_flight: List[Message] = []
     replaced_message: Optional[Message] = None
@@ -1957,9 +1957,7 @@ def replace_message(messages_in_flight: Collection[Message], message: Message) -
             continue
         if replaced_message is None:
             replaced_message = message_in_flight
-            message_name = replaced_message.clean_name() + '=>' + message_name
-            message = message.with_name(message_name)
-            new_messages_in_flight.append(message)
+            message = message.with_name(replaced_message.clean_name() + '=>' + message.state.name)
             continue
         raise RuntimeError(f'the replacement message: {original_message}\n'
                            f'can replace either the in-flight message: {replaced_message}\n'
@@ -1967,11 +1965,18 @@ def replace_message(messages_in_flight: Collection[Message], message: Message) -
 
     if replaced_message is None:
         if not pattern.match('none'):
-            raise RuntimeError(f'the replacement message: {message}\n'
+            raise RuntimeError(f'the replacement message: {original_message}\n'
                                f'did not replace any message')
-        message = message.with_name(message_name)
-        new_messages_in_flight.append(message)
 
+    elif replaced_message.is_ordered() and message.is_ordered():
+        replaced_order = replaced_message.order()
+        message_order = message.order()
+        if message_order != replaced_order + 1:
+            raise NotImplementedError(f'the ordered replacement message: {original_message}\n'
+                                      f'replaced a much older message: {replaced_message}')
+        message = message.reorder(-1)
+
+    new_messages_in_flight.append(message)
     return tuple(new_messages_in_flight)
 
 

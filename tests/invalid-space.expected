@@ -4,157 +4,157 @@ fontsize = 32;
 node [ fontname = "Sans-Serif" ];
 edge [ fontname = "Sans-Serif" ];
 label = "Total Space";
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client" [ penwidth=3, label="client &rarr;
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="client &rarr;
 confirm! / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="client &rarr;
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="client &rarr;
 confirm! / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check / client-0 -> client" [ penwidth=3, label="client &rarr;
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check=>check@0 / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check@0 / client-0 -> client" [ penwidth=3, label="client &rarr;
 confirm! / client-1
 &rarr; client-1" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check=>check / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check / client-0 -> client" [ penwidth=3, label="client &rarr;
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check@0 / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check@0 / client-0 -> client" [ penwidth=3, label="client &rarr;
 confirm! / client-1
 &rarr; client-1" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check / client-1 -> client" [ penwidth=3, label="@ check &rarr;
-time
-&rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ check &rarr;
-time
-&rarr; client-1" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
-check / client-0
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
+check&rArr;check@0 / client-0
 &rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check / client-0 -> client" [ penwidth=3, label="client-1 &rarr;
-check / client-1
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check=>check@0 / client-0 -> client" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ check &rarr;
-time
-&rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
-check / client-0
-&rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check / client-0 -> client" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
-&rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ check &rarr;
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ check &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
-check&rArr;check / client-0
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
+check&rArr;check@0 / client-0
 &rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check=>check / client-0 -> client" [ penwidth=3, label="client-1 &rarr;
-check / client-1
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check=>check@0 / client-0 -> client" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
-check&rArr;check / client-0
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ check &rarr;
+time
+&rarr; client-0" ];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
+check@0 / client-0
 &rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check=>check / client-0 -> client" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check@0 / client-0 -> client" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
+&rarr; client" ];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ check &rarr;
+time
+&rarr; client-0" ];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ check &rarr;
+time
+&rarr; client-1" ];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
+check@0 / client-0
+&rarr; client" ];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check@0 / client-0 -> client" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
 "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client -> confirm! / client-0 -> client-0" -> "client @ idle , client-0 @ idle , client-1 @ idle , server @ ready" [ penwidth=3, label="client &rarr;
 confirm! / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check / client-0 -> client" [ penwidth=3, label="@ check &rarr;
+"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check@0 / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+time
+&rarr; client-1" ];
+"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check@0 / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
+time
+&rarr; client-1" ];
+"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check@0 / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client -> confirm! / client-0 -> client-0" [ penwidth=3, label="client-0 &rarr;
+check&rArr;check@0 / client-0
+&rarr; client" ];
+"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check@0 / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check@0 / client-0 -> client" [ penwidth=3, label="@ check &rarr;
 time
 &rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check@0 / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check@0 / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client -> confirm! / client-0 -> client-0" [ penwidth=3, label="client-0 &rarr;
-check / client-0
-&rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
-time
-&rarr; client-1" ];
-"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
-time
-&rarr; client-1" ];
-"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client -> confirm! / client-0 -> client-0" [ penwidth=3, label="client-0 &rarr;
-check&rArr;check / client-0
+"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check@0 / client-0 -> client" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client -> confirm! / client-0 -> client-0" [ penwidth=3, label="client-0 &rarr;
+check@0 / client-0
 &rarr; client" ];
 "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ idle , client-1 @ wait / 1 , server @ ready ; client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="client &rarr;
 confirm! / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ check &rarr;
-time
-&rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="@ wait &rarr;
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="@ wait &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="client-0 &rarr;
-check / client-0
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="client-0 &rarr;
+check&rArr;check@0 / client-0
 &rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ busy / client-1 ; client-0 -> check / client-0 -> client ! agent: server is invalid because: client-1 is banned" [ penwidth=3, label="client-1 &rarr;
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ busy / client-1 ; client-0 -> check=>check@0 / client-0 -> client ! agent: server is invalid because: client-1 is banned" [ penwidth=3, label="client-1 &rarr;
 request@0 / client-1
 &rarr; server" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="@ wait &rarr;
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ check &rarr;
+time
+&rarr; client-0" ];
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="@ wait &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="client-0 &rarr;
-check&rArr;check / client-0
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="client-0 &rarr;
+check@0 / client-0
 &rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ busy / client-1 ; client-0 -> check=>check / client-0 -> client ! agent: server is invalid because: client-1 is banned" [ penwidth=3, label="client-1 &rarr;
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ busy / client-1 ; client-0 -> check@0 / client-0 -> client ! agent: server is invalid because: client-1 is banned" [ penwidth=3, label="client-1 &rarr;
 request@0 / client-1
 &rarr; server" ];
 "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ idle , client-1 @ wait / 2 , server @ ready ; client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="client &rarr;
 confirm! / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="@ check &rarr;
-time
-&rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="client-0 &rarr;
-check / client-0
+"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="client-0 &rarr;
+check&rArr;check@0 / client-0
 &rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ busy / client-1 ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server ! agent: server is invalid because: client-1 is banned" [ penwidth=3, label="client-1 &rarr;
+"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ busy / client-1 ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server ! agent: server is invalid because: client-1 is banned" [ penwidth=3, label="client-1 &rarr;
 request@0 / client-1
 &rarr; server" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="client-0 &rarr;
-check&rArr;check / client-0
+"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="@ check &rarr;
+time
+&rarr; client-0" ];
+"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="client-0 &rarr;
+check@0 / client-0
 &rarr; client" ];
-"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ busy / client-1 ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server ! agent: server is invalid because: client-1 is banned" [ penwidth=3, label="client-1 &rarr;
+"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ busy / client-1 ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server ! agent: server is invalid because: client-1 is banned" [ penwidth=3, label="client-1 &rarr;
 request@0 / client-1
 &rarr; server" ];
 "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1" -> "client @ idle , client-0 @ idle , client-1 @ idle , server @ ready" [ penwidth=3, label="client &rarr;
 confirm! / client-1
 &rarr; client-1" ];
-"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ check &rarr;
+"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+time
+&rarr; client-0" ];
+"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+time
+&rarr; client-0" ];
+"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
+&rarr; client" ];
+"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ check &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-0" ];
-"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-0" ];
-"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1" [ penwidth=3, label="client-1 &rarr;
-check / client-1
+"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
-time
-&rarr; client-0" ];
-"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
-time
-&rarr; client-0" ];
-"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
-&rarr; client" ];
-"client @ idle , client-0 @ idle , client-1 @ idle , server @ ready" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check / client-0 -> client" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ idle , client-1 @ idle , server @ ready" -> "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check@0 / client-0 -> client" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-0" ];
 "client @ idle , client-0 @ idle , client-1 @ idle , server @ ready" -> "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-0" ];
-"client @ idle , client-0 @ idle , client-1 @ idle , server @ ready" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ idle , client-1 @ idle , server @ ready" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
 "client @ idle , client-0 @ idle , client-1 @ idle , server @ ready" -> "client @ idle , client-0 @ idle , client-1 @ wait / 1 , server @ ready ; client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ idle , client-1 @ wait / 1 , server @ ready ; client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ idle , client-1 @ wait / 1 , server @ ready ; client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-0" ];
 "client @ idle , client-0 @ idle , client-1 @ wait / 1 , server @ ready ; client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ wait / 1 , client-1 @ wait / 1 , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
@@ -166,7 +166,7 @@ time
 "client @ idle , client-0 @ idle , client-1 @ wait / 1 , server @ ready ; client-1 -> request@0 / client-1 -> server" -> "client @ idle , client-0 @ idle , client-1 @ wait / 1 , server @ busy / client-1 ! agent: server is invalid because: client-1 is banned" [ penwidth=3, label="client-1 &rarr;
 request@0 / client-1
 &rarr; server" ];
-"client @ idle , client-0 @ idle , client-1 @ wait / 2 , server @ ready ; client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ idle , client-1 @ wait / 2 , server @ ready ; client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-0" ];
 "client @ idle , client-0 @ idle , client-1 @ wait / 2 , server @ ready ; client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" -> "client @ idle , client-0 @ wait / 1 , client-1 @ wait / 2 , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
@@ -178,26 +178,26 @@ request@0 / client-1
 "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1" -> "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ busy / client-0" [ penwidth=3, label="client &rarr;
 confirm! / client-1
 &rarr; client-1" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
 time
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ check &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ wait &rarr;
+time
+&rarr; client-0" ];
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
+&rarr; client" ];
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
+time
+&rarr; server" ];
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ check &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" [ penwidth=3, label="@ wait &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ wait &rarr;
 time
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1" [ penwidth=3, label="client-1 &rarr;
-check / client-1
-&rarr; client" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
-time
-&rarr; server" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ wait &rarr;
-time
-&rarr; client-0" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
 "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server" -> "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="client &rarr;
 confirm! / client-1
@@ -205,52 +205,52 @@ confirm! / client-1
 "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client &rarr;
 confirm! / client-1
 &rarr; client-1" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ check &rarr;
-time
-&rarr; client-1" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check / client-1 -> client" [ penwidth=3, label="@ wait &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ wait &rarr;
 time
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
 request@0 / client-0
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
-check / client-1
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ wait &rarr;
-time
-&rarr; client-0" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
-request@0 / client-0
-&rarr; server" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
-&rarr; client" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ check &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ check &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ wait &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ wait &rarr;
 time
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
-check / client-1
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
+request@0 / client-0
+&rarr; server" ];
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client" [ penwidth=3, label="server &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ wait &rarr;
+time
+&rarr; client-0" ];
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
+&rarr; client" ];
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="server &rarr;
 response@0 / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ wait &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ check &rarr;
+time
+&rarr; client-1" ];
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ wait &rarr;
 time
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="server &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="server &rarr;
 response@0 / client-0
 &rarr; client-0" ];
 "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ busy / client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
 time
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ busy / client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ busy / client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
 "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ busy / client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ wait / 1 , server @ busy / client-0 ; client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
@@ -259,7 +259,7 @@ time
 "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ busy / client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="@ wait &rarr;
 time
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
 "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server" -> "client @ idle , client-0 @ wait / 1 , client-1 @ wait / 1 , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
@@ -271,7 +271,7 @@ time
 "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server" -> "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ busy / client-0" [ penwidth=3, label="client-0 &rarr;
 request@0 / client-0
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
 "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ wait / 1 , server @ ready ; client-1 -> request@0 / client-1 -> server , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
@@ -346,40 +346,40 @@ confirm! / client-1
 "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client &rarr;
 confirm! / client-1
 &rarr; client-1" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
 time
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ check &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
+&rarr; client" ];
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
+time
+&rarr; server" ];
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ check &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
-check / client-1
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
 time
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
-time
-&rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ check &rarr;
-time
-&rarr; client-1" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
-check / client-1
-&rarr; client" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client" [ penwidth=3, label="server &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="server &rarr;
 response@0 / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
 time
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ check &rarr;
+time
+&rarr; client-1" ];
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="server &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="server &rarr;
 response@0 / client-0
 &rarr; client-0" ];
 "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" -> "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" [ penwidth=3, label="client &rarr;
@@ -391,61 +391,61 @@ confirm! / client-1
 "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="client &rarr;
 confirm! / client-1
 &rarr; client-1" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="@ check &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
+request@0 / client-0
+&rarr; server" ];
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
+&rarr; client" ];
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="@ check &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
 request@0 / client-0
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
-check / client-1
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check@0 / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="client-0 &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-0 &rarr;
 request@0 / client-0
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check=>check / client-1 -> client" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ check &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ penwidth=3, label="server &rarr;
+response@0 / client-0
+&rarr; client-0" ];
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ check &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-0 &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-0 &rarr;
 request@0 / client-0
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
-check / client-1
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" [ penwidth=3, label="server &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="server &rarr;
 response@0 / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-0 &rarr;
-request@0 / client-0
-&rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
+check&rArr;check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ penwidth=3, label="server &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="server &rarr;
 response@0 / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="@ check &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="@ check &rarr;
 time
 &rarr; client-1" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
-check / client-1
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
+check@0 / client-1
 &rarr; client" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="server &rarr;
-response@0 / client-0
-&rarr; client-0" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="client-1 &rarr;
-check&rArr;check / client-1
-&rarr; client" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="server &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="server &rarr;
 response@0 / client-0
 &rarr; client-0" ];
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server" -> "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
 time
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server" -> "client @ idle , client-0 @ wait / 2 , client-1 @ wait / 1 , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
@@ -454,7 +454,7 @@ time
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="@ busy &rarr;
 time
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ wait / 1 , server @ busy / client-0 ; client-1 -> request@0 / client-1 -> server , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
@@ -463,7 +463,7 @@ time
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ busy / client-0" [ penwidth=3, label="server &rarr;
 response@0 / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" -> "client @ idle , client-0 @ wait / 2 , client-1 @ wait / 1 , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> request@0 / client-1 -> server" [ penwidth=3, label="@ idle &rarr;
@@ -472,7 +472,7 @@ time
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" -> "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="client-0 &rarr;
 request@0 / client-0
 &rarr; server" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ wait / 1 , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> request@0 / client-1 -> server , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
@@ -484,7 +484,7 @@ request@0 / client-0
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server , server -> response@0 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ ready ; client-0 -> request@0 / client-0 -> server" [ penwidth=3, label="server &rarr;
 response@0 / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
+"client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
 time
 &rarr; client-1" ];
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ ready ; server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 2 , client-1 @ wait / 1 , server @ ready ; client-1 -> request@0 / client-1 -> server , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ penwidth=3, label="@ idle &rarr;
@@ -568,72 +568,72 @@ request@0 / client-1
 "client @ idle , client-0 @ wait / 2 , client-1 @ wait / 2 , server @ ready ; client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" -> "client @ idle , client-0 @ wait / 1 , client-1 @ wait / 2 , server @ ready ; client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server , server -> response@0 / client-0 -> client-0" [ penwidth=3, label="server &rarr;
 response@0 / client-0
 &rarr; client-0" ];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check / client-1 -> client" [ label="client @ idle
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check=>check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ check
 client-1 @ check
 server @ ready
 client -> confirm! / client-0 -> client-0
-client-1 -> check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check=>check / client-1 -> client" [ label="client @ idle
+client-1 -> check=>check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ check
 client-1 @ check
 server @ ready
 client -> confirm! / client-0 -> client-0
-client-1 -> check=>check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check / client-0 -> client" [ label="client @ idle
+client-1 -> check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check=>check@0 / client-0 -> client" [ label="client @ idle
 client-0 @ check
 client-1 @ check
 server @ ready
 client -> confirm! / client-1 -> client-1
-client-0 -> check / client-0 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check=>check / client-0 -> client" [ label="client @ idle
+client-0 -> check=>check@0 / client-0 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> check@0 / client-0 -> client" [ label="client @ idle
 client-0 @ check
 client-1 @ check
 server @ ready
 client -> confirm! / client-1 -> client-1
-client-0 -> check=>check / client-0 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check / client-1 -> client" [ label="client @ idle
+client-0 -> check@0 / client-0 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ check
 client-1 @ check
 server @ ready
-client-0 -> check / client-0 -> client
-client-1 -> check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> check=>check / client-1 -> client" [ label="client @ idle
+client-0 -> check=>check@0 / client-0 -> client
+client-1 -> check=>check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ check
 client-1 @ check
 server @ ready
-client-0 -> check / client-0 -> client
-client-1 -> check=>check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check / client-1 -> client" [ label="client @ idle
+client-0 -> check=>check@0 / client-0 -> client
+client-1 -> check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check=>check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ check
 client-1 @ check
 server @ ready
-client-0 -> check=>check / client-0 -> client
-client-1 -> check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> check=>check / client-1 -> client" [ label="client @ idle
+client-0 -> check@0 / client-0 -> client
+client-1 -> check=>check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ check , client-1 @ check , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ check
 client-1 @ check
 server @ ready
-client-0 -> check=>check / client-0 -> client
-client-1 -> check=>check / client-1 -> client", shape=box, style=filled, color=palegreen];
+client-0 -> check@0 / client-0 -> client
+client-1 -> check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
 "client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client -> confirm! / client-0 -> client-0" [ label="client @ idle
 client-0 @ check
 client-1 @ idle
 server @ ready
 client -> confirm! / client-0 -> client-0", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check / client-0 -> client" [ label="client @ idle
+"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check@0 / client-0 -> client" [ label="client @ idle
 client-0 @ check
 client-1 @ idle
 server @ ready
-client-0 -> check / client-0 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check=>check / client-0 -> client" [ label="client @ idle
+client-0 -> check=>check@0 / client-0 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ check , client-1 @ idle , server @ ready ; client-0 -> check@0 / client-0 -> client" [ label="client @ idle
 client-0 @ check
 client-1 @ idle
 server @ ready
-client-0 -> check=>check / client-0 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ busy / client-1 ; client-0 -> check / client-0 -> client ! agent: server is invalid because: client-1 is banned" [ label="agent: server is invalid
+client-0 -> check@0 / client-0 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ busy / client-1 ; client-0 -> check=>check@0 / client-0 -> client ! agent: server is invalid because: client-1 is banned" [ label="agent: server is invalid
 because: client-1 is banned", shape=box, style=filled, color=lightcoral];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ busy / client-1 ; client-0 -> check=>check / client-0 -> client ! agent: server is invalid because: client-1 is banned" [ label="agent: server is invalid
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ busy / client-1 ; client-0 -> check@0 / client-0 -> client ! agent: server is invalid because: client-1 is banned" [ label="agent: server is invalid
 because: client-1 is banned", shape=box, style=filled, color=lightcoral];
 "client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server" [ label="client @ idle
 client-0 @ check
@@ -641,21 +641,21 @@ client-1 @ wait / 1
 server @ ready
 client -> confirm! / client-0 -> client-0
 client-1 -> request@0 / client-1 -> server", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ label="client @ idle
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ label="client @ idle
 client-0 @ check
 client-1 @ wait / 1
 server @ ready
-client-0 -> check / client-0 -> client
+client-0 -> check=>check@0 / client-0 -> client
 client-1 -> request@0 / client-1 -> server", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ label="client @ idle
+"client @ idle , client-0 @ check , client-1 @ wait / 1 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server" [ label="client @ idle
 client-0 @ check
 client-1 @ wait / 1
 server @ ready
-client-0 -> check=>check / client-0 -> client
+client-0 -> check@0 / client-0 -> client
 client-1 -> request@0 / client-1 -> server", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ busy / client-1 ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server ! agent: server is invalid because: client-1 is banned" [ label="agent: server is invalid
+"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ busy / client-1 ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server ! agent: server is invalid because: client-1 is banned" [ label="agent: server is invalid
 because: client-1 is banned", shape=box, style=filled, color=lightcoral];
-"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ busy / client-1 ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server ! agent: server is invalid because: client-1 is banned" [ label="agent: server is invalid
+"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ busy / client-1 ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server ! agent: server is invalid because: client-1 is banned" [ label="agent: server is invalid
 because: client-1 is banned", shape=box, style=filled, color=lightcoral];
 "client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client -> confirm! / client-0 -> client-0 , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ label="client @ idle
 client-0 @ check
@@ -664,18 +664,18 @@ server @ ready
 client -> confirm! / client-0 -> client-0
 client-1 -> request@0 / client-1 -> server
 client-1 -> request@1 / client-1 -> server", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ label="client @ idle
+"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check=>check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ label="client @ idle
 client-0 @ check
 client-1 @ wait / 2
 server @ ready
-client-0 -> check / client-0 -> client
+client-0 -> check=>check@0 / client-0 -> client
 client-1 -> request@0 / client-1 -> server
 client-1 -> request@1 / client-1 -> server", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check=>check / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ label="client @ idle
+"client @ idle , client-0 @ check , client-1 @ wait / 2 , server @ ready ; client-0 -> check@0 / client-0 -> client , client-1 -> request@0 / client-1 -> server , client-1 -> request@1 / client-1 -> server" [ label="client @ idle
 client-0 @ check
 client-1 @ wait / 2
 server @ ready
-client-0 -> check=>check / client-0 -> client
+client-0 -> check@0 / client-0 -> client
 client-1 -> request@0 / client-1 -> server
 client-1 -> request@1 / client-1 -> server", shape=box, style=filled, color=palegreen];
 "client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1" [ label="client @ idle
@@ -683,16 +683,16 @@ client-0 @ idle
 client-1 @ check
 server @ ready
 client -> confirm! / client-1 -> client-1", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client" [ label="client @ idle
+"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ idle
 client-1 @ check
 server @ ready
-client-1 -> check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client" [ label="client @ idle
+client-1 -> check=>check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ idle , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ idle
 client-1 @ check
 server @ ready
-client-1 -> check=>check / client-1 -> client", shape=box, style=filled, color=palegreen];
+client-1 -> check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
 "client @ idle , client-0 @ idle , client-1 @ idle , server @ ready" [ label="client @ idle
 client-0 @ idle
 client-1 @ idle
@@ -717,16 +717,16 @@ client-0 @ wait / 1
 client-1 @ check
 server @ busy / client-0
 client -> confirm! / client-1 -> client-1", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client" [ label="client @ idle
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ wait / 1
 client-1 @ check
 server @ busy / client-0
-client-1 -> check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client" [ label="client @ idle
+client-1 -> check=>check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ wait / 1
 client-1 @ check
 server @ busy / client-0
-client-1 -> check=>check / client-1 -> client", shape=box, style=filled, color=palegreen];
+client-1 -> check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
 "client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server" [ label="client @ idle
 client-0 @ wait / 1
 client-1 @ check
@@ -739,29 +739,29 @@ client-1 @ check
 server @ ready
 client -> confirm! / client-1 -> client-1
 server -> response@0 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" [ label="client @ idle
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ wait / 1
 client-1 @ check
 server @ ready
 client-0 -> request@0 / client-0 -> server
-client-1 -> check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ label="client @ idle
+client-1 -> check=>check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ wait / 1
 client-1 @ check
 server @ ready
 client-0 -> request@0 / client-0 -> server
-client-1 -> check=>check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
+client-1 -> check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
 client-0 @ wait / 1
 client-1 @ check
 server @ ready
-client-1 -> check / client-1 -> client
+client-1 -> check=>check@0 / client-1 -> client
 server -> response@0 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
+"client @ idle , client-0 @ wait / 1 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
 client-0 @ wait / 1
 client-1 @ check
 server @ ready
-client-1 -> check=>check / client-1 -> client
+client-1 -> check@0 / client-1 -> client
 server -> response@0 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
 "client @ idle , client-0 @ wait / 1 , client-1 @ idle , server @ busy / client-0" [ label="client @ idle
 client-0 @ wait / 1
@@ -834,29 +834,29 @@ client-1 @ check
 server @ busy / client-0
 client -> confirm! / client-1 -> client-1
 server -> response@0 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client" [ label="client @ idle
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ wait / 2
 client-1 @ check
 server @ busy / client-0
 client-0 -> request@0 / client-0 -> server
-client-1 -> check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ label="client @ idle
+client-1 -> check=>check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ wait / 2
 client-1 @ check
 server @ busy / client-0
 client-0 -> request@0 / client-0 -> server
-client-1 -> check=>check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
+client-1 -> check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
 client-0 @ wait / 2
 client-1 @ check
 server @ busy / client-0
-client-1 -> check / client-1 -> client
+client-1 -> check=>check@0 / client-1 -> client
 server -> response@0 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ busy / client-0 ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
 client-0 @ wait / 2
 client-1 @ check
 server @ busy / client-0
-client-1 -> check=>check / client-1 -> client
+client-1 -> check@0 / client-1 -> client
 server -> response@0 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
 "client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client -> confirm! / client-1 -> client-1 , client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server" [ label="client @ idle
 client-0 @ wait / 2
@@ -879,46 +879,46 @@ server @ ready
 client -> confirm! / client-1 -> client-1
 server -> response@0 / client-0 -> client-0
 server -> response@1 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check / client-1 -> client" [ label="client @ idle
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ wait / 2
 client-1 @ check
 server @ ready
 client-0 -> request@0 / client-0 -> server
 client-0 -> request@1 / client-0 -> server
-client-1 -> check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check=>check / client-1 -> client" [ label="client @ idle
+client-1 -> check=>check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-0 -> request@1 / client-0 -> server , client-1 -> check@0 / client-1 -> client" [ label="client @ idle
 client-0 @ wait / 2
 client-1 @ check
 server @ ready
 client-0 -> request@0 / client-0 -> server
 client-0 -> request@1 / client-0 -> server
-client-1 -> check=>check / client-1 -> client", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
+client-1 -> check@0 / client-1 -> client", shape=box, style=filled, color=palegreen];
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
 client-0 @ wait / 2
 client-1 @ check
 server @ ready
 client-0 -> request@0 / client-0 -> server
-client-1 -> check / client-1 -> client
+client-1 -> check=>check@0 / client-1 -> client
 server -> response@0 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-0 -> request@0 / client-0 -> server , client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0" [ label="client @ idle
 client-0 @ wait / 2
 client-1 @ check
 server @ ready
 client-0 -> request@0 / client-0 -> server
-client-1 -> check=>check / client-1 -> client
+client-1 -> check@0 / client-1 -> client
 server -> response@0 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ label="client @ idle
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check=>check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ label="client @ idle
 client-0 @ wait / 2
 client-1 @ check
 server @ ready
-client-1 -> check / client-1 -> client
+client-1 -> check=>check@0 / client-1 -> client
 server -> response@0 / client-0 -> client-0
 server -> response@1 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
-"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check=>check / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ label="client @ idle
+"client @ idle , client-0 @ wait / 2 , client-1 @ check , server @ ready ; client-1 -> check@0 / client-1 -> client , server -> response@0 / client-0 -> client-0 , server -> response@1 / client-0 -> client-0" [ label="client @ idle
 client-0 @ wait / 2
 client-1 @ check
 server @ ready
-client-1 -> check=>check / client-1 -> client
+client-1 -> check@0 / client-1 -> client
 server -> response@0 / client-0 -> client-0
 server -> response@1 / client-0 -> client-0", shape=box, style=filled, color=palegreen];
 "client @ idle , client-0 @ wait / 2 , client-1 @ idle , server @ busy / client-0 ; client-0 -> request@0 / client-0 -> server" [ label="client @ idle

@@ -106,13 +106,13 @@
 <path fill="none" stroke="darkgreen" stroke-width="3" d="M58.78,-150.02C63.73,-150.84 65.84,-173.25 65.11,-192.49"/>
 <polygon fill="darkgreen" stroke="darkgreen" stroke-width="3" points="61.6,-192.48 64.42,-202.7 68.59,-192.96 61.6,-192.48"/>
 </g>
-<!-- client&#45;1 &rarr; | check | &rarr; client -->
+<!-- client&#45;1 &rarr; | check@0 | &rarr; client -->
 <g id="node7" class="node">
-<title>client&#45;1 &rarr; | check | &rarr; client</title>
+<title>client&#45;1 &rarr; | check@0 | &rarr; client</title>
 <polygon fill="paleturquoise" stroke="paleturquoise" points="241.5,-186.5 241.5,-255.5 319.5,-255.5 319.5,-186.5 241.5,-186.5"/>
 <text text-anchor="middle" x="280.5" y="-240.3" font-family="Sans-Serif" font-size="14.00">client&#45;1 →</text>
 <polyline fill="none" stroke="paleturquoise" points="241.5,-232.5 319.5,-232.5 "/>
-<text text-anchor="middle" x="280.5" y="-217.3" font-family="Sans-Serif" font-size="14.00">check</text>
+<text text-anchor="middle" x="280.5" y="-217.3" font-family="Sans-Serif" font-size="14.00">check@0</text>
 <polyline fill="none" stroke="paleturquoise" points="241.5,-209.5 319.5,-209.5 "/>
 <text text-anchor="middle" x="280.5" y="-194.3" font-family="Sans-Serif" font-size="14.00">→ client</text>
 </g>
@@ -142,9 +142,9 @@
 <path fill="none" stroke="darkgreen" stroke-width="3" d="M259.44,-291.99C257.14,-291.55 182.83,-277.46 126.5,-256 117.25,-252.48 107.59,-248.1 98.55,-243.68"/>
 <polygon fill="darkgreen" stroke="darkgreen" stroke-width="3" points="99.9,-240.44 89.4,-239.08 96.76,-246.7 99.9,-240.44"/>
 </g>
-<!-- client&#45;1 @ idle =&gt; @ idle &#45;&gt; time &#45;&gt; client&#45;1 =&gt; client&#45;1 @ check&#45;&gt;client&#45;1 &rarr; | check | &rarr; client -->
+<!-- client&#45;1 @ idle =&gt; @ idle &#45;&gt; time &#45;&gt; client&#45;1 =&gt; client&#45;1 @ check&#45;&gt;client&#45;1 &rarr; | check@0 | &rarr; client -->
 <g id="edge7" class="edge">
-<title>client&#45;1 @ idle =&gt; @ idle &#45;&gt; time &#45;&gt; client&#45;1 =&gt; client&#45;1 @ check&#45;&gt;client&#45;1 &rarr; | check | &rarr; client</title>
+<title>client&#45;1 @ idle =&gt; @ idle &#45;&gt; time &#45;&gt; client&#45;1 =&gt; client&#45;1 @ check&#45;&gt;client&#45;1 &rarr; | check@0 | &rarr; client</title>
 <path fill="none" stroke="mediumblue" stroke-width="3" d="M259.52,-291.95C259.78,-291.08 263.34,-279.2 267.46,-265.47"/>
 <polygon fill="mediumblue" stroke="mediumblue" stroke-width="3" points="270.85,-266.36 270.37,-255.78 264.14,-264.35 270.85,-266.36"/>
 </g>
