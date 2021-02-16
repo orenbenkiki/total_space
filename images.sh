@@ -5,7 +5,7 @@ export PYTHONPATH=.:$PYTHONPATH
 set -eou pipefail
 set -x
 
-$PYTHON3 -m total_space.simple_model space -l 'Complete Model' \
+$PYTHON3 -m total_space.simple_model -r space -l 'Complete Model' \
 | dot -Tsvg > images/complete.svg
 
 $PYTHON3 -m total_space.simple_model -i -P space -l 'Partial Model' \

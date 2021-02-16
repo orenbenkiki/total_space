@@ -775,6 +775,41 @@ class System(Immutable):
                       configurations=tuple(sorted(model.configurations.values())),
                       transitions=tuple(sorted(model.transitions)))
 
+    def verify_reachable(self) -> None:
+        '''
+        Verify the initial configuration is reachable from every other configuration,
+        which implies every configuration is reachable from every other configuration.
+        '''
+        incoming_transitions: Dict[str, List[Transition]] = {}
+        for transition in self.transitions:
+            transitions_list = incoming_transitions.get(transition.to_configuration_name)
+            if transitions_list is None:
+                transitions_list = incoming_transitions[transition.to_configuration_name] = []
+            transitions_list.append(transition)
+
+        reachable_configurations: Set[str] = set()
+        pending_configurations = [self.initial_configuration.name]
+
+        while len(pending_configurations) > 0:
+            configuration_name = pending_configurations.pop()
+            if configuration_name in reachable_configurations:
+                continue
+            reachable_configurations.add(configuration_name)
+            for transition in incoming_transitions[configuration_name]:
+                pending_configurations.append(transition.from_configuration_name)
+
+        if len(reachable_configurations) == len(self.configurations):
+            return
+
+        unreachable_configurations: List[str] = []
+        for configuration in self.configurations:
+            if configuration.name not in reachable_configurations:
+                unreachable_configurations.append(configuration.name)
+
+        raise RuntimeError(f'the initial configuration: {self.initial_configuration}\n'
+                           f"can't be reached from {len(unreachable_configurations)} configurations:\n- "
+                           + '\n- '.join(sorted(unreachable_configurations)))
+
     def focus_on_agents(self, keep_agents: Collection[str]) -> 'System':
         '''
         Return a simplified view of the system which focuses a subset of the
@@ -2025,6 +2060,8 @@ def main(
     parser.add_argument('-o', '--output', action='store', metavar='FILE', help='Write output to the specified file.')
     parser.add_argument('-i', '--invalid', action='store_true',
                          help='Allow invalid conditions (but do not further explore them).')
+    parser.add_argument('-r', '--reachable', action='store_true',
+                         help='Verify the initial state is reachable from every other state.')
     parser.add_argument('-d', '--debug', action='store_true',
                          help='Print every configuration as it is created to stderr for debugging.')
     parser.add_argument('-f', '--focus', metavar='AGENT', action='append', default=[],
@@ -2108,6 +2145,8 @@ def main(
         args.patterns = None
     system = System.compute(agents=model(args), validate=validate, allow_invalid=args.invalid,
                             debug=args.debug, patterns=args.patterns)
+    if args.reachable:
+        system.verify_reachable()
     if len(args.focus) > 0:
         system = system.focus_on_agents(args.focus)
     if args.names:
