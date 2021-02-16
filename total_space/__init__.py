@@ -1118,7 +1118,7 @@ class System(Immutable):
             if not separate_messages:
                 reachable_configuration_names.add(from_configuration.name)
                 reachable_configuration_names.add(to_configuration.name)
-                label = message_space_label(delivered_message).replace(' | ', '\n')
+                label = message_space_label(delivered_message).replace(' | ', '\\n')
                 file.write(f'"{from_configuration.name}" -> "{to_configuration.name}" '
                            f'[ penwidth=3, label="{label}" ];\n')
                 continue
@@ -1237,10 +1237,10 @@ def print_space_node(file: 'TextIO', configuration: Configuration, node_names: S
 
     if configuration.valid:
         color = 'palegreen'
-        label = configuration.name.replace(' , ', '\n').replace(' ; ', '\n')
+        label = configuration.name.replace(' , ', '\\n').replace(' ; ', '\\n')
     else:
         color = 'lightcoral'
-        label = '\n\n'.join([invalid_label(invalid) for invalid in configuration.invalids])
+        label = '\\n\\n'.join([invalid_label(invalid) for invalid in configuration.invalids])
     file.write(f'"{configuration.name}" [ label="{label}", shape=box, style=filled, color={color}];\n')
 
 
@@ -1273,9 +1273,9 @@ def invalid_label(invalid: Invalid) -> str:
     The label to show for an invalid notification.
     '''
     label = str(invalid)
-    label = label.replace(' because:', '\nbecause:')
-    label = label.replace(' for message:', '\nfor message:')
-    label = label.replace(' when in state:', '\nwhen in state:')
+    label = label.replace(' because:', '\\nbecause:')
+    label = label.replace(' for message:', '\\nfor message:')
+    label = label.replace(' when in state:', '\\nwhen in state:')
     return label
 
 
