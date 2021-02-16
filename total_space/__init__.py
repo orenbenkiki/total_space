@@ -1963,6 +1963,8 @@ def replace_message(messages_in_flight: Collection[Message], message: Message) -
                            f'can replace either the in-flight message: {replaced_message}\n'
                            f'or the in-flight-message: {message_in_flight}')
 
+    new_messages_in_flight.append(message)
+
     if replaced_message is None:
         if not pattern.match('none'):
             raise RuntimeError(f'the replacement message: {original_message}\n'
@@ -1970,13 +1972,18 @@ def replace_message(messages_in_flight: Collection[Message], message: Message) -
 
     elif replaced_message.is_ordered() and message.is_ordered():
         replaced_order = replaced_message.order()
-        message_order = message.order()
-        if message_order != replaced_order + 1:
-            raise NotImplementedError(f'the ordered replacement message: {original_message}\n'
-                                      f'replaced a much older message: {replaced_message}')
-        message = message.reorder(-1)
 
-    new_messages_in_flight.append(message)
+        def reorder_message(in_flight_message: Message) -> Message:
+            if in_flight_message.is_ordered \
+                    and in_flight_message.source_agent_name == message.source_agent_name \
+                    and in_flight_message.target_agent_name == message.target_agent_name \
+                    and in_flight_message.order() > replaced_order:
+                return in_flight_message.reorder(-1)
+            return in_flight_message
+
+        new_messages_in_flight = [reorder_message(in_flight_message)
+                                  for in_flight_message in new_messages_in_flight]
+
     return tuple(new_messages_in_flight)
 
 
