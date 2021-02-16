@@ -787,6 +787,9 @@ class System(Immutable):
                 transitions_list = incoming_transitions[transition.to_configuration_name] = []
             transitions_list.append(transition)
 
+        if self.initial_configuration.name not in incoming_transitions:
+            raise RuntimeError(f'there is no way to return to the initial configuration: {self.initial_configuration.name}')
+
         reachable_configurations: Set[str] = set()
         pending_configurations = [self.initial_configuration.name]
 
