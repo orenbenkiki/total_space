@@ -1210,7 +1210,12 @@ class System(Immutable):
                     file.write(edge)
                     message_edges.add(edge)
 
-    def print_time(self, file: 'TextIO', label: str, patterns: List['re.Pattern']) -> None:  # pylint: disable=too-many-locals
+    def print_time(  # pylint: disable=too-many-locals,too-many-branches
+        self,
+        file: 'TextIO',
+        label: str,
+        patterns: List['re.Pattern']
+    ) -> None:
         '''
         Print a ``dot`` file visualizing the interaction between agents along
         the specified path.
@@ -1262,7 +1267,7 @@ class System(Immutable):
                 print_message_time_nodes_between(file, sorted_agents[left_agent_index],
                                                  sorted_agents[right_agent_index], time_tracking)
 
-        last_messages: List[Tuple[str, str, str, str]] = []
+        last_messages: List[Tuple[str, str, Optional[str], Optional[str]]] = []
         for run_index, run_agents_range in enumerate(reversed(run_agent_indices)):
             file.write(f'subgraph "cluster_between_{run_index}" {{\n')
             file.write('color = white;\n')
