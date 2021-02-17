@@ -188,6 +188,13 @@ class State(Immutable):
         '''
         self.name = name
 
+    @modifier
+    def with_data(self, data: Immutable) -> None:
+        '''
+        Return a new state with a modified data.
+        '''
+        self.data = data
+
 
 class Message(Immutable):
     '''
