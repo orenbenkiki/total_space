@@ -1234,19 +1234,60 @@ class System(Immutable):
         for invalid in final_configuration.invalids:
             print_invalid_time_node(file, invalid)
 
-        for left_agent in self.configurations[0].agents:
-            for right_agent in self.configurations[0].agents:
-                if right_agent.name <= left_agent.name:
+        sorted_agents = list(sorted(self.configurations[0].agents))
+        agents_run: List[int] = []
+        for agent_index, agent in enumerate(sorted_agents):
+            first_index = agent_index
+            while first_index > 0 and agent.name.startswith(sorted_agents[first_index - 1].name):
+                first_index -= 1
+            agents_run.append(agent_index - first_index)
+
+        run_agent_indices: List[range] = []
+        agent_index = len(agents_run) - 1
+        while agent_index >= 0:
+            run_size = agents_run[agent_index]
+            first_index = agent_index - run_size
+            run_agent_indices.append(range(agent_index - run_size, agent_index + 1))
+            agent_index -= run_size
+            agent_index -= 1
+
+        for run_index, run_agents_range in enumerate(reversed(run_agent_indices)):
+            for agent_index in run_agents_range:
+                agents_run[agent_index] = run_index
+
+        for left_agent_index, left_agent_run in enumerate(agents_run):
+            for right_agent_index, right_agent_run in enumerate(agents_run):
+                if left_agent_run == right_agent_run or right_agent_index <= left_agent_index:
                     continue
-                print_message_time_nodes_between(file, left_agent, right_agent, time_tracking)
+                print_message_time_nodes_between(file, sorted_agents[left_agent_index],
+                                                 sorted_agents[right_agent_index], time_tracking)
 
-        for agent in self.configurations[0].agents:
-            last_agent_node, last_message_name, last_message_node = \
-                print_agent_time_nodes(file, transitions, configuration_by_name, time_tracking,
-                                       agent.name, agent_indices[agent.name])
+        last_messages: List[Tuple[str, str, str, str]] = []
+        for run_index, run_agents_range in enumerate(reversed(run_agent_indices)):
+            file.write(f'subgraph "cluster_between_{run_index}" {{\n')
+            file.write('color = white;\n')
+            file.write('fontsize = 0;\n')
+            file.write('label = "";\n')
 
-            for invalid in final_configuration.invalids:
-                if invalid.kind == 'agent' and invalid.name == agent.name:
+            for left_agent_index in run_agents_range:
+                for right_agent_index in run_agents_range:
+                    if right_agent_index <= left_agent_index:
+                        continue
+                print_message_time_nodes_between(file, sorted_agents[left_agent_index],
+                                                 sorted_agents[right_agent_index], time_tracking)
+
+            for agent_index in run_agents_range:
+                agent = sorted_agents[agent_index]
+                last_agent_node, last_message_name, last_message_node = \
+                    print_agent_time_nodes(file, transitions, configuration_by_name, time_tracking,
+                                           agent.name, agent_indices[agent.name])
+                last_messages.append((agent.name, last_agent_node, last_message_name, last_message_node))
+
+            file.write('}\n')
+
+        for invalid in final_configuration.invalids:
+            for agent_name, last_agent_node, last_message_name, last_message_node in last_messages:
+                if invalid.kind == 'agent' and invalid.name == agent_name:
                     file.write(f'"{last_agent_node}" -> "{invalid}" [ penwidth=3, color=crimson, weight=1000 ];\n')
                 elif invalid.kind == 'message' and invalid.name == last_message_name:
                     file.write(f'"{last_message_node}" -> "{invalid}" [ penwidth=3, color=crimson, weight=1000 ];\n')
