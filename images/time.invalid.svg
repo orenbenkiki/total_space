@@ -326,8 +326,7 @@
 <!-- client&#45;1&#45;time&#45;1&#45;&gt;client&#45;1@2 -->
 <g id="edge25" class="edge">
 <title>client&#45;1&#45;time&#45;1:c&#45;&gt;client&#45;1@2:c</title>
-<path fill="none" stroke="mediumblue" stroke-width="3" d="M396.78,-234.02C399.69,-232.78 402.63,-231.62 405.5,-230.6 414.08,-227.56 424.17,-225.19 431.48,-223.68"/>
-<polygon fill="mediumblue" stroke="mediumblue" stroke-width="3" points="432.26,-227.1 441.44,-221.81 430.97,-220.22 432.26,-227.1"/>
+<path fill="none" stroke="mediumblue" stroke-width="3" d="M396.78,-234.02C399.69,-232.78 402.63,-231.62 405.5,-230.6 420.54,-225.27 440.23,-222.01 441.44,-221.81"/>
 </g>
 <!-- client&#45;1@4 -->
 <g id="node32" class="node">

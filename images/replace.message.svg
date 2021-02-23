@@ -186,8 +186,7 @@
 <!-- message&#45;1&#45;5&#45;&gt;client@6 -->
 <g id="edge24" class="edge">
 <title>message&#45;1&#45;5:c&#45;&gt;client@6:c</title>
-<path fill="none" stroke="mediumblue" stroke-width="3" d="M410.22,-195.19C426.17,-191.61 441.42,-188.19 450.97,-186.05"/>
-<polygon fill="mediumblue" stroke="mediumblue" stroke-width="3" points="451.94,-189.42 460.93,-183.82 450.41,-182.59 451.94,-189.42"/>
+<path fill="none" stroke="mediumblue" stroke-width="3" d="M410.22,-195.19C435.74,-189.47 459.47,-184.14 460.93,-183.82"/>
 </g>
 <!-- message&#45;0&#45;0 -->
 <!-- message&#45;0&#45;1 -->
@@ -478,8 +477,7 @@
 <!-- client&#45;1&#45;time&#45;1&#45;&gt;client&#45;1@2 -->
 <g id="edge42" class="edge">
 <title>client&#45;1&#45;time&#45;1:c&#45;&gt;client&#45;1@2:c</title>
-<path fill="none" stroke="mediumblue" stroke-width="3" d="M186.28,-304.62C189.19,-303.38 192.13,-302.22 195,-301.2 203.58,-298.16 213.67,-295.79 220.98,-294.28"/>
-<polygon fill="mediumblue" stroke="mediumblue" stroke-width="3" points="221.76,-297.7 230.94,-292.41 220.47,-290.82 221.76,-297.7"/>
+<path fill="none" stroke="mediumblue" stroke-width="3" d="M186.28,-304.62C189.19,-303.38 192.13,-302.22 195,-301.2 210.04,-295.87 229.73,-292.61 230.94,-292.41"/>
 </g>
 <!-- client&#45;1@4 -->
 <g id="node47" class="node">
@@ -516,8 +514,7 @@
 <!-- client&#45;1&#45;time&#45;3&#45;&gt;client&#45;1@4 -->
 <g id="edge46" class="edge">
 <title>client&#45;1&#45;time&#45;3:c&#45;&gt;client&#45;1@4:c</title>
-<path fill="none" stroke="mediumblue" stroke-width="3" d="M186.26,-248.96C189.17,-247.73 192.12,-246.59 195,-245.6 203.57,-242.67 213.66,-240.53 220.97,-239.21"/>
-<polygon fill="mediumblue" stroke="mediumblue" stroke-width="3" points="221.62,-242.65 230.94,-237.61 220.51,-235.74 221.62,-242.65"/>
+<path fill="none" stroke="mediumblue" stroke-width="3" d="M186.26,-248.96C189.17,-247.73 192.12,-246.59 195,-245.6 210.02,-240.46 229.72,-237.77 230.94,-237.61"/>
 </g>
 <!-- client&#45;1@6 -->
 <g id="node50" class="node">

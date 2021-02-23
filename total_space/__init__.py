@@ -1315,6 +1315,9 @@ def new_messages(from_configuration: Configuration, to_configuration: Configurat
             if not message_is_in(message, from_configuration)]
 
 def message_is_in(message: Message, configuration: Configuration) -> bool:
+    '''
+    Return whether a message from an old configuration exists in a new configuration.
+    '''
     if message in configuration.messages_in_flight:
         return True
     if not message.is_ordered():
@@ -1820,10 +1823,15 @@ class Model:  # pylint: disable=too-many-instance-attributes
             self.missing_handler(configuration, agent, message, message_index)
             return
 
-        if len(actions) == 0 and not is_deferring:
-            raise RuntimeError(f'an agent: {agent.name}\n'
-                               f'in the non-deferring state: {agent.state.name}\n'
-                               f'defers the message: {message.state.name}')
+        if len(actions) == 0:
+            if not is_deferring:
+                raise RuntimeError(f'an agent: {agent.name}\n'
+                                   f'in the non-deferring state: {agent.state.name}\n'
+                                   f'defers the message: {message.state.name}')
+            if message.is_immediate():
+                raise RuntimeError(f'an agent: {agent.name}\n'
+                                   f'in the deferring state: {agent.state.name}\n'
+                                   f'defers the immediate message: {message.state.name}')
 
         for action in actions:
             self.perform_action(configuration, agent, agent_index, action, message, message_index)
