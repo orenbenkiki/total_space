@@ -579,10 +579,11 @@ class Configuration(Immutable):
         '''
         Return a simplified configuration focusing only on some of the agents.
         '''
-        agents = tuple([self.agents[agent_index] for agent_index in agent_indices])
+        agents = tuple(self.agents[agent_index] for agent_index in agent_indices)
         agent_names = {agent.name for agent in agents}
-        messages_in_flight = tuple([message for message in self.messages_in_flight
-                                    if message.source_agent_name in agent_names or message.target_agent_name in agent_names])
+        messages_in_flight = tuple(message for message in self.messages_in_flight
+                                   if message.source_agent_name in agent_names
+                                   or message.target_agent_name in agent_names)
         invalids = self.invalids
         return Configuration(agents=agents, messages_in_flight=messages_in_flight, invalids=invalids)
 
@@ -877,7 +878,7 @@ class System(Immutable):
                                         to_configuration_name=new_to_configuration_name)
             new_transitions[str(new_transition)] = new_transition
 
-        new_configurations = tuple([new_configuration_by_name[name] for name in sorted(reachable_configuration_names)])
+        new_configurations = tuple(new_configuration_by_name[name] for name in sorted(reachable_configuration_names))
         new_initial_configuration = \
                 new_configuration_by_name[new_name_by_old_name[self.initial_configuration.name]]
         return System(initial_configuration=new_initial_configuration,
@@ -1073,7 +1074,7 @@ class System(Immutable):
         '''
         node_names: Set[str] = set()
         if merge_messages:
-            configurations = tuple([configuration.only_agents() for configuration in self.configurations])
+            configurations = tuple(configuration.only_agents() for configuration in self.configurations)
         else:
             configurations = self.configurations
 
@@ -1248,25 +1249,20 @@ class System(Immutable):
             print_invalid_time_node(file, invalid)
 
         sorted_agents = list(sorted(self.configurations[0].agents))
+
         agents_run: List[int] = []
-        for agent_index, agent in enumerate(sorted_agents):
-            first_index = agent_index
-            while first_index > 0 and agent.name.startswith(sorted_agents[first_index - 1].name):
-                first_index -= 1
-            agents_run.append(agent_index - first_index)
-
         run_agent_indices: List[range] = []
-        agent_index = len(agents_run) - 1
-        while agent_index >= 0:
-            run_size = agents_run[agent_index]
-            first_index = agent_index - run_size
-            run_agent_indices.append(range(agent_index - run_size, agent_index + 1))
-            agent_index -= run_size
-            agent_index -= 1
-
-        for run_index, run_agents_range in enumerate(reversed(run_agent_indices)):
-            for agent_index in run_agents_range:
-                agents_run[agent_index] = run_index
+        agent_index = 0
+        while agent_index < len(sorted_agents):
+            agent = sorted_agents[agent_index]
+            run_index = len(run_agent_indices)
+            agents_run.append(run_index)
+            stop_index = agent_index + 1
+            while stop_index < len(sorted_agents) and sorted_agents[stop_index].name.startswith(agent.name):
+                agents_run.append(run_index)
+                stop_index += 1
+            run_agent_indices.append(range(agent_index, stop_index))
+            agent_index = stop_index
 
         for left_agent_index, left_agent_run in enumerate(agents_run):
             for right_agent_index, right_agent_run in enumerate(agents_run):
@@ -1355,9 +1351,9 @@ def message_space_label(message: Message) -> str:
     '''
     The label to show for a message.
     '''
-    return f'{message.source_agent_name} &rarr; ' \
-           f'| {str(message.state).replace("=>", "&rArr;")} ' \
-           f'| &rarr; {message.target_agent_name}'
+    return f'{message.source_agent_name} &#8594; ' \
+           f'| {str(message.state).replace("=>", "&#8658;")} ' \
+           f'| &#8594; {message.target_agent_name}'
 
 
 def invalid_label(invalid: Invalid) -> str:
@@ -1931,13 +1927,13 @@ class Model:  # pylint: disable=too-many-instance-attributes
             new_messages_in_flight = tuple_remove(from_configuration.messages_in_flight, message_index)
             if message.is_ordered():
                 assert message.order() == 0
-                new_messages_in_flight = tuple([other_message.reorder(-1)
-                                                if other_message.is_ordered()
-                                                and other_message.source_agent_name == message.source_agent_name
-                                                and other_message.target_agent_name == message.target_agent_name
-                                                else other_message
-                                                for other_message
-                                                in new_messages_in_flight])
+                new_messages_in_flight = tuple(other_message.reorder(-1)
+                                               if other_message.is_ordered()
+                                               and other_message.source_agent_name == message.source_agent_name
+                                               and other_message.target_agent_name == message.target_agent_name
+                                               else other_message
+                                               for other_message
+                                               in new_messages_in_flight)
 
         new_send_messages = []
         for send_message in send_messages:
