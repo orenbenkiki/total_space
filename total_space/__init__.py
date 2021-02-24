@@ -724,9 +724,9 @@ class TimeTracking:
                             and old_message.target_agent_name == message.target_agent_name \
                             and old_message.clean_name() == replaced_name:
                         assert replaced_id is None
-                        replaced_id = self.message_id_by_times[(time_counter,  str(old_message))][0]
-                assert replaced_id is not None
-                self.replaced_message_id[message_id] = replaced_id
+                        replaced_id = self.message_id_by_times[(time_counter, str(old_message))][0]
+                if replaced_id is not None:
+                    self.replaced_message_id[message_id] = replaced_id
 
             configuration = to_configuration
             time_counter = to_time_counter
@@ -1312,8 +1312,17 @@ def new_messages(from_configuration: Configuration, to_configuration: Configurat
     '''
     return [message
             for message in to_configuration.messages_in_flight
-            if message not in from_configuration.messages_in_flight]
+            if not message_is_in(message, from_configuration)]
 
+def message_is_in(message: Message, configuration: Configuration) -> bool:
+    if message in configuration.messages_in_flight:
+        return True
+    if not message.is_ordered():
+        return False
+    prev_message = message.reorder(1)
+    if prev_message in configuration.messages_in_flight:
+        return True
+    return False
 
 def print_space_node(file: 'TextIO', configuration: Configuration, node_names: Set[str]) -> None:
     '''
@@ -1398,7 +1407,7 @@ def print_message_time_nodes_between(  # pylint: disable=too-many-locals
 
         replaced_last_time = time_tracking.message_lifetime_by_id[replaced_id][1]
         intermediate_time = replaced_last_time + 1
-        message_first_time = time_tracking.message_lifetime_by_id[message_id][1]
+        message_first_time = time_tracking.message_lifetime_by_id[message_id][0]
         assert message_first_time == intermediate_time + 1
         replaced_node = f'message-{replaced_id}-{replaced_last_time}'
         intermediate_node = f'message-{message_id}-{intermediate_time}'
@@ -1549,6 +1558,7 @@ def print_agent_time_nodes(  # pylint: disable=too-many-locals,too-many-argument
                     last_message_node = f'message-{message_id}-{to_time_counter}'
                     file.write(f'"{mid_node}":c -> "{last_message_node}":c '
                                '[ penwidth=3, color=mediumblue, constraint=false ];\n')
+                    did_message = True
 
         message = transition.delivered_message
         if message.target_agent_name == agent_name:
@@ -2039,8 +2049,14 @@ def replace_message(messages_in_flight: Collection[Message], message: Message) -
     replaced_message: Optional[Message] = None
     for message_in_flight in messages_in_flight:
         if message_in_flight.source_agent_name != message.source_agent_name \
-                or message_in_flight.target_agent_name != message.target_agent_name \
-                or not pattern.match(message_in_flight.state.name):
+                or message_in_flight.target_agent_name != message.target_agent_name:
+            new_messages_in_flight.append(message_in_flight)
+            continue
+        message_in_flight_name = message_in_flight.state.name
+        if '=>' in message_in_flight_name:
+            index = message_in_flight_name.index('=>')
+            message_in_flight_name = message_in_flight_name[index + 2:]
+        if not pattern.match(message_in_flight_name):
             new_messages_in_flight.append(message_in_flight)
             continue
         if replaced_message is None:
