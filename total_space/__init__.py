@@ -242,9 +242,12 @@ class Message(Immutable):
         '''
         Remove the data for a simplified view of the message.
         '''
+        message_name = self.state.name
+        if self.is_ordered():
+            message_name = message_name.split('@')[0]
         return Message(source_agent_name=self.source_agent_name,
                        target_agent_name=self.target_agent_name,
-                       state=State(name=self.state.name))
+                       state=State(name=message_name))
 
     @modifier
     def with_name(self, name: str) -> None:
