@@ -1165,29 +1165,30 @@ class System(Immutable):
             if not separate_messages:
                 reachable_configuration_names.add(from_configuration.name)
                 reachable_configuration_names.add(to_configuration.name)
-                label = message_space_label(delivered_message).replace(' | ', '\\n')
+                label = message_space_label(delivered_message, None).replace(' | ', '\\n')
                 file.write(f'"{from_configuration.name}" -> "{to_configuration.name}" '
                            f'[ penwidth=3, label="{label}" ];\n')
                 continue
 
             edges: List[str] = []
 
+            transition_context = f'{from_configuration.name} => {to_configuration.name}'
             if sent_message is None:
-                intermediate = f'{from_configuration.name} => {to_configuration.name}'
+                intermediate = transition_context
             else:
                 intermediate = f'{from_configuration.name} => {delivered_message} => {to_configuration.name}'
 
             if sent_message is not None:
-                print_space_message(file, sent_message, message_nodes)
-                label = message_space_label(sent_message)
+                print_space_message(file, sent_message, message_nodes, transition_context)
+                label = message_space_label(sent_message, transition_context)
                 edges.append(f'"{intermediate}" -> "{label}" [ penwidth=3, color=mediumblue ];\n')
                 arrowhead = 'none'
             else:
                 arrowhead = 'normal'
 
             if known_target or sent_message is not None:
-                print_space_message(file, delivered_message, message_nodes)
-                label = message_space_label(delivered_message)
+                print_space_message(file, delivered_message, message_nodes, transition_context)
+                label = message_space_label(delivered_message, transition_context)
                 edges.append(f'"{label}" -> "{intermediate}" '
                              f'[ penwidth=3, color=mediumblue, dir=forward, arrowhead={arrowhead} ];\n')
 
@@ -1206,12 +1207,15 @@ class System(Immutable):
             edges += [
                 f'"{from_configuration.name}" -> "{intermediate}" '
                 f'[ penwidth=3, color={color}, dir=forward, arrowhead=none ];\n',
-                f'"{intermediate}" -> "{to_configuration.name}" '
+                f'"{intermediate}" -> "{intermediate}-2" '
+                f'[ penwidth=3, color={color}, dir=forward, arrowhead=none ];\n'
+                f'"{intermediate}-2" -> "{to_configuration.name}" '
                 f'[ penwidth=3, color={color} ];\n'
             ]
 
             if intermediate not in intermediate_nodes:
                 file.write(f'"{intermediate}" [ shape=box, label="", penwidth=4, width=0, height=0, color="#0063cd" ];\n')
+                file.write(f'"{intermediate}-2" [ shape=box, label="", penwidth=2, width=0, height=0, color="darkgreen" ];\n')
                 intermediate_nodes.add(intermediate)
 
             for edge in edges:
@@ -1344,11 +1348,12 @@ def print_space_node(file: 'TextIO', configuration: Configuration, node_names: S
     file.write(f'"{configuration.name}" [ label="{label}", shape=box, style=filled, color={color}];\n')
 
 
-def print_space_message(file: 'TextIO', message: Message, message_nodes: Set[str]) -> None:
+def print_space_message(file: 'TextIO', message: Message, message_nodes: Set[str], context: Optional[str]) -> None:
     '''
     Print a node for an in-flight messages.
     '''
-    label = message_space_label(message)
+    show_label = message_space_label(message, None)
+    label = message_space_label(message, context)
     if label in message_nodes:
         return
     message_nodes.add(label)
@@ -1356,16 +1361,19 @@ def print_space_message(file: 'TextIO', message: Message, message_nodes: Set[str
         color = 'darkturquoise'
     else:
         color = 'paleturquoise'
-    file.write(f'"{label}" [ label="{{{label}}}", shape=record, style=filled, color={color} ];\n')
+    file.write(f'"{label}" [ label="{{{show_label}}}", shape=record, style=filled, color={color} ];\n')
 
 
-def message_space_label(message: Message) -> str:
+def message_space_label(message: Message, context: Optional[str]) -> str:
     '''
     The label to show for a message.
     '''
-    return f'{message.source_agent_name} &#8594; ' \
-           f'| {str(message.state).replace("=>", "&#8658;")} ' \
-           f'| &#8594; {message.target_agent_name}'
+    label = f'{message.source_agent_name} &#8594; ' \
+            f'| {str(message.state).replace("=>", "&#8658;")} ' \
+            f'| &#8594; {message.target_agent_name}'
+    if context is not None:
+        label += f" | {context}"
+    return label
 
 
 def invalid_label(invalid: Invalid) -> str:
