@@ -298,6 +298,17 @@ class Message(Immutable):
         parts[-1] = str(new_order)
         self.state = self.state.with_name('@'.join(parts))
 
+    @modifier
+    def condense(self) -> None:
+        '''
+        Return the condensed message name.
+        '''
+        if self.is_immediate():
+            name = self.clean_name() + '!'
+        else:
+            name = self.clean_name()
+        self.state = self.state.with_name(name)
+
     def clean_name(self) -> str:
         '''
         Return the clean message name (w/o the ``!`` or ``@`` suffix, or the ``=>`` prefix).
@@ -1151,12 +1162,10 @@ class System(Immutable):
 
             sent_message: Optional[Message] = None
             if separate_messages:
-                if len(to_configuration.messages_in_flight) > len(from_configuration.messages_in_flight):
-                    assert len(to_configuration.messages_in_flight) == len(from_configuration.messages_in_flight) + 1
-                    for message in new_messages(from_configuration, to_configuration):
-                        if (message.source_agent_name in agent_names or message.target_agent_name in agent_names):
-                            sent_message = message
-                            break
+                for message in new_messages(from_configuration, to_configuration):
+                    if (message.source_agent_name in agent_names or message.target_agent_name in agent_names):
+                        sent_message = message
+                        break
 
             if merge_messages:
                 from_configuration = from_configuration.only_agents()
@@ -1175,11 +1184,14 @@ class System(Immutable):
 
             edges: List[str] = []
 
+            delivered_message = delivered_message.condense()
+
             transition_context = f'{from_configuration.name} => {to_configuration.name}'
             if sent_message is None:
                 intermediate = transition_context
             else:
-                intermediate = f'{from_configuration.name} => {delivered_message} => {to_configuration.name}'
+                sent_message = sent_message.condense()
+                intermediate = f'{from_configuration.name} => {sent_message} => {to_configuration.name}'
 
             if sent_message is not None:
                 print_space_message(file, sent_message, message_nodes, transition_context)
@@ -1190,8 +1202,9 @@ class System(Immutable):
                 arrowhead = 'normal'
 
             if known_target or sent_message is not None:
-                print_space_message(file, delivered_message, message_nodes, transition_context)
-                label = message_space_label(delivered_message, transition_context)
+                suffix = ' ! ' + str(sent_message)
+                print_space_message(file, delivered_message, message_nodes, transition_context + suffix)
+                label = message_space_label(delivered_message, transition_context + suffix)
                 edges.append(f'"{label}" -> "{intermediate}" '
                              f'[ penwidth=3, color=mediumblue, dir=forward, arrowhead={arrowhead} ];\n')
 
@@ -1371,6 +1384,7 @@ def message_space_label(message: Message, context: Optional[str]) -> str:
     '''
     The label to show for a message.
     '''
+    message = message.condense()
     label = f'{message.source_agent_name} &#8594; ' \
             f'| {str(message.state).replace("=>", "&#8658;")} ' \
             f'| &#8594; {message.target_agent_name}'
